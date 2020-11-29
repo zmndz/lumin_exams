@@ -1,0 +1,65 @@
+@font-face {
+	font-family: 'vazir';
+	src: url('~assets/fonts/Vazir-light.eot'); 
+	src: url('~assets/fonts/Vazir-light.eot'); 
+	src: url('~assets/fonts/Vazir-light.eot?#iefix') format('embedded-opentype'), 
+				url('~assets/fonts/Vazir-light.woff2') format('woff2'),
+				url('~assets/fonts/Vazir-light.woff') format('woff'),
+				url('~assets/fonts/Vazir-light.ttf')  format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'vazir';
+	src: url('~assets/fonts/Vazir-Bold.eot'); 
+	src: url('~assets/fonts/Vazir-Bold.eot'); 
+	src: url('~assets/fonts/Vazir-Bold.eot?#iefix') format('embedded-opentype'), 
+				url('~assets/fonts/Vazir-Bold.woff2') format('woff2'),
+				url('~assets/fonts/Vazir-Bold.woff') format('woff'),
+				url('~assets/fonts/Vazir-Bold.ttf')  format('truetype');
+	font-weight: bold;
+	font-style: normal;
+}
+
+body {
+  font-family: 'vazir';
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.custom-switch.b-custom-control-lg .custom-control-label {
+	font-size: 12px;
+	line-height: 30px;
+}
+
+.custom-control-label::before {
+	border-color: #ccc !important;
+}
+
+.custom-switch .custom-control-label::after {
+	background-color: #dadada;
+}
+
+.custom-control-input:checked ~ .custom-control-label::before {
+	border-color: #fdbc11 !important;
+	background-color: #fdbc11 !important;
+	box-shadow: none !important;
+}
+
+.custom-control-input ~ .custom-control-label::before {
+	box-shadow: none !important;
+}
+
+.custom-control-input:active ~ .custom-control-label::before {
+	background-color: lighten(#fdbc11, 27%) !important;
+}

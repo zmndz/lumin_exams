@@ -177,6 +177,8 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex';
+
 export default {
   layout: 'studentLayout',
   data() {
@@ -199,6 +201,9 @@ export default {
     }
   },
   methods: {
+    ...mapActions([
+      'fetchStudentExams',
+    ]),
     isActiveSortType(SortTypeId) {
       return this.activeSortType == SortTypeId
     },
@@ -208,6 +213,7 @@ export default {
   },
   mounted() {
     this.setActiveSortType(this.activeSortType);
+    this.fetchStudentExams();
   }
 }
 </script>

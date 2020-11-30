@@ -6,6 +6,7 @@ export default function(ctx) {
     (config) => {
       try {
 
+        let studentToken = localStorage.getItem('studentToken')
         let adminLoginToken = localStorage.getItem('adminLoginToken')
         let adminVerifyToken = localStorage.getItem('adminVerifyToken')
         config.headers.common['Content-Type'] = 'application/x-www-form-urlencoded'
@@ -13,6 +14,8 @@ export default function(ctx) {
           config.headers.Authorization = `Bearer ${adminVerifyToken}`
         } else if (adminLoginToken) {
           config.headers.Authorization = `Bearer ${adminLoginToken}`
+        } else {
+          config.headers.Authorization = `Bearer ${studentToken}`
         }
 
         return config

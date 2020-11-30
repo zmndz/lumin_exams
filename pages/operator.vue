@@ -89,7 +89,7 @@
 </template>
 
 <script>
-import { mapState, mapActions, mapMutations } from 'vuex'
+import { mapActions } from 'vuex';
 
 export default {
   data() {
@@ -103,11 +103,6 @@ export default {
       isVerifyCountdownStarted: false,
       isPhoneChecked: false,
     }
-  },
-  computed: {
-    ...mapState({
-      // loginAdmin: state => state.admin,
-    }),
   },
   methods: {
     ...mapActions([

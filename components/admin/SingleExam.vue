@@ -1,10 +1,10 @@
 <template>
-  <div v-if="!isExamListEmpty" class="">
+  <div v-if="isExamListEmpty" class="">
     <div v-if="!getAdminOnlyExamsChecked" class="exams__list">
       <div class="exams__single-wrapper" v-for="(exam, index) in examsList" :key="index">
         <div class="exams__single">
           <div class="exams__image-wrapper">
-            <img class="exams__image" :class="{'exams__image--expired' : isExpired}" src="~/assets/images/books/book_placeholder.svg" alt="">
+            <img class="exams__image" :class="{'exams__image--expired' : exam.isExpire}" src="~/assets/images/books/book_placeholder.svg" alt="">
           </div>
           <div class="exams__details-wrapper">
             <div class="exams__details">
@@ -44,7 +44,7 @@
             <div :key="index" class="exams__questions-upload-wrapper">
   <!-- To do: fix fileupload v-model -->
               <b-form-file :id="'js-examQuestionsFile-' + index" class="exams__questions-upload" v-model="zzz.examQuestionsFile" plain></b-form-file>
-              <div v-if="isExpired" class="exams__questions-upload-expired">
+              <div v-if="exam.isExpire" class="exams__questions-upload-expired">
                 برگذار شده
               </div>
               <div v-else>
@@ -102,7 +102,7 @@
 import { mapActions, mapGetters } from 'vuex'
 
 export default {
-  props:['examsList', 'isExpired'],  
+  props:['examsList'],  
   data() {
     return {
       currentExamPreview: [],
@@ -116,21 +116,13 @@ export default {
       'getAdminExamSearch',
     ]),
     isExamListEmpty() {
-      return (Object.keys(this.examsList).length === 0 && this.examsList.constructor === Object);
+      return this.examsList.length;
     },
     noResultMessage() {
-      if (this.isExpired) {
-        return `نتیجه ای برای عبارت ${this.getAdminExamSearch} در آزمون های برگذار شده وجود ندارد`
-      } else {
-        return `نتیجه ای برای عبارت ${this.getAdminExamSearch} در آزمون های پیش رو وجود ندارد`
-      }
+      return `نتیجه ای برای عبارت ${this.getAdminExamSearch} وجود ندارد`
     },
     onlyExamsCheckedMessage() {
-      if (this.isExpired) {
-        return `آزمون های برگذار شده، آزمون دارای سوالی ندارند`
-      } else {
-        return `آزمون های پیش رو، آزمون دارای سوالی ندارند`
-      }
+      return `آزمون دارای سوالی ندارد`
     },
   },
   methods: {

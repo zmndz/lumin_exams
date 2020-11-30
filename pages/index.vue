@@ -14,10 +14,10 @@
           >
             <b-form-input
               id="input-1"
-              class="login__username"
-              v-model="form.username"
+              class="login__national-code"
+              v-model="form.nationalCode"
               required
-              placeholder="نام کاربری"
+              placeholder="کد ملی"
             ></b-form-input>
           </b-form-group>
 
@@ -32,13 +32,14 @@
             ></b-form-input>
           </b-form-group>
 
-          <b-form-group id="input-group-4">
-            <!-- <b-form-checkbox-group v-model="form.checked" id="checkboxes-4">
+          <!-- <b-form-group id="input-group-4">
+            <b-form-checkbox-group v-model="form.checked" id="checkboxes-4">
               <b-form-checkbox value="me" class="d-flex flex-row-reverse">مرا به خاطر بسپار</b-form-checkbox>
-            </b-form-checkbox-group> -->
+            </b-form-checkbox-group>
+
               <b-link class="login__forgot-password" href="#">فراموشی رمز عبور</b-link>
-          </b-form-group>
-          <div class="login__submit" @click="goToLogin">ورود</div>
+          </b-form-group> -->
+          <div class="login__submit" @click="login">ورود</div>
         </b-form>
       </div>
       <div class="login__footer__wrapper">
@@ -53,20 +54,34 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex';
+
 export default {
   data() {
     return {
       form: {
-        username: '',
+        nationalCode: '',
         password: '',
-        checked: []
+        // checked: [],
       },
     }
   },
   methods: {
-    goToLogin() {
-      this.$router.push('/student/examList')
-    }
+    ...mapActions([
+      'loginStudent',
+    ]),
+    async login() {
+      let requestParams = {
+        nationalCode: this.form.nationalCode,
+        password: this.form.password,
+      }
+      let loginResult = await this.loginStudent(requestParams);
+      if (loginResult && loginResult.success === true) {
+        this.$router.push('/student');
+      } else {
+        console.log("Error: login result ", loginResult);
+      }
+    },
   }
 }
 </script>
@@ -120,7 +135,7 @@ export default {
       }
     }
 
-    &__username {
+    &__national-code {
       border: none;
       border-bottom: 1px solid #e4e4e4;
       border-radius: 0;
@@ -167,7 +182,7 @@ export default {
       border: none;
       border-radius: 50px;
       height: 46px;
-      margin-top: 32px;
+      margin-top: 50px;
       box-shadow: 4px 10px 10px -4px rgba(253, 188, 17, 0.32);
       text-align: center;
       line-height: 44px;

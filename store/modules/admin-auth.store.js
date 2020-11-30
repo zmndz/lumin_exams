@@ -9,6 +9,7 @@ export const state = () => ({
     loginToken: '',
     verifyToken: '',
     role: '',
+    name: '',
     isAdminLoggedIn: false,
     isOnlyExamsChecked: false,
     activeSortType: 'AVAILABLE_EXAMS',
@@ -16,9 +17,7 @@ export const state = () => ({
     examSearch: '',
     activeExams: [],
     expiredExams: [],
-  },
-  student: {
-    isStudentLoggedIn: false,
+    currentExams: [],
   },
 })
 
@@ -26,23 +25,23 @@ export const getters = {
   getAdminMobile(state) {
     return state.admin.mobile;
   },
-  getAdminLoginToken(state) {
-    return state.admin.loginToken;
-  },
+  // getAdminLoginToken(state) {
+  //   return state.admin.loginToken;
+  // },
   getVerifyToken(state) {
     return state.admin.verifyToken;
   },
   getOtpCode(state) {
     return state.admin.otpCode;
   },
-  getRole(state) {
+  getAdminRole(state) {
     return state.admin.role;
+  },
+  getAdminName(state) {
+    return state.admin.name;
   },
   getIsAdminLoggedIn(state) {
     return state.admin.isAdminLoggedIn;
-  },
-  getAdminSortTypes(state) {
-    return state.admin.sortTypes;
   },
   getAdminActiveSortType(state) {
     return state.admin.activeSortType;
@@ -59,9 +58,8 @@ export const getters = {
   getAdminExpiredExams(state) {
     return state.admin.expiredExams;
   },
-
-  getIsStudentLoggedIn(state) {
-    return state.student.isStudentLoggedIn;
+  getAdminCurrentExams(state) {
+    return state.admin.currentExams;
   },
 }
 
@@ -71,11 +69,13 @@ export const mutations = {
     let loginToken = localStorage.getItem('adminLoginToken');
     let verifyToken = localStorage.getItem('adminVerifyToken');
     let role = localStorage.getItem('adminRole');
+    let name = localStorage.getItem('adminName');
     let userType = localStorage.getItem('userType');
     state.admin.mobile = mobile;
     state.admin.loginToken = loginToken;
     state.admin.verifyToken = verifyToken;
     state.admin.role = role;
+    state.admin.name = name;
     state.admin.userType = userType;
     state.admin.isAdminLoggedIn = loginToken ? true : false;
   },
@@ -86,15 +86,16 @@ export const mutations = {
   SET_ADMIN_VERIFY_DATA(state, data) {
     state.admin.role = data.role;
     state.admin.verifyToken = data.token;
+    state.admin.name = data.name;
   },
-  SET_ADMIN_LOGIN(state, data) {
-    state.admin.isAdminLoggedIn = true;
-    state.student.isStudentLoggedIn = false;
-  },
-  SET_ADMIN_LOGOUT(state, data) {
-    state.admin.isAdminLoggedIn = false;
-    state.student.isStudentLoggedIn = false;
-  },
+  // SET_ADMIN_LOGIN(state, data) {
+  //   state.admin.isAdminLoggedIn = true;
+  //   state.student.isStudentLoggedIn = false;
+  // },
+  // SET_ADMIN_LOGOUT(state, data) {
+  //   state.admin.isAdminLoggedIn = false;
+  //   state.student.isStudentLoggedIn = false;
+  // },
   SET_ADMIN_ACTIVE_SORT_TYPE(state, data) {
     state.admin.activeSortType = data;
   },
@@ -103,7 +104,6 @@ export const mutations = {
   },
 
   SET_ADMIN_EXAM_SEARCH(state, data) {
-    console.log("aaa", data)
     state.admin.examSearch = data;
   },
   SET_ADMIN_ACTIVE_EXAMS(state, data) {
@@ -112,22 +112,8 @@ export const mutations = {
   SET_ADMIN_EXPIRED_EXAMS(state, data) {
     state.admin.expiredExams = data;
   },
-
-  SET_STUDENT_LOGIN_DATA(state, data) {
-    // state.student.mobile = data.mobile;
-    // state.student.loginToken = data.loginToken;
-  },
-  SET_STUDENT_VERIFY_DATA(state, data) {
-    // state.student.role = data.role;
-    // state.student.verifyToken = data.token;
-  },
-  SET_STUDENT_LOGIN(state, data) {
-    state.student.isStudentLoggedIn = true;
-    state.admin.isAdminLoggedIn = false;
-  },
-  SET_STUDENT_LOGOUT(state, data) {
-    state.student.isStudentLoggedIn = false;
-    state.admin.isAdminLoggedIn = false;
+  SET_ADMIN_CURRENT_EXAMS(state, data) {
+    state.admin.currentExams = data;
   },
 }
 
@@ -146,7 +132,7 @@ export const actions = {
         mobile: data, 
         loginToken: fetchResult.data.token
       };
-      commit("SET_ADMIN_LOGIN_DATA", result);
+      // commit("SET_ADMIN_LOGIN_DATA", result);
       dispatch('setAdminLoginData', result);
       return fetchResult;
     } else if (fetchResult && (fetchResult.success === false)) {
@@ -167,15 +153,15 @@ export const actions = {
     localStorage.setItem('adminMobile', (payload.mobile));
     localStorage.setItem('adminLoginToken', (payload.loginToken));
   },
-  getAdminLoginToken({ dispatch, commit }, payload) {
-    let loginToken = (localStorage.getItem('adminLoginToken'));
-    return loginToken;
-  },
+  // getAdminLoginToken({ dispatch, commit }, payload) {
+  //   let loginToken = (localStorage.getItem('adminLoginToken'));
+  //   return loginToken;
+  // },
   async verifyAdmin({ state, dispatch, commit }, data) {
     const requestBody = {
       codesms: data,
     };
-    let loginToken = await dispatch('getAdminLoginToken');
+    // let loginToken = await dispatch('getAdminLoginToken');
     
     // const headers = {
     //     'Authorization': "Bearer " + loginToken,
@@ -186,7 +172,7 @@ export const actions = {
     return await this.$axios.post(url, qs.stringify(requestBody)).then((res) => {
       if (res.data && (res.data.success === true)) {
         commit("SET_ADMIN_LOGIN_DATA", res.data.data);
-        commit("SET_ADMIN_LOGIN", true);
+        // commit("SET_ADMIN_LOGIN", true);
         dispatch('setAdminVerifyData', res.data.data);
         dispatch('setUserType', 'admin');
         return res.data;
@@ -209,6 +195,7 @@ export const actions = {
   setAdminVerifyData(ctx, payload) {
     localStorage.setItem('adminRole', (payload.role));
     localStorage.setItem('adminVerifyToken', (payload.token));
+    localStorage.setItem('adminName', (payload.name));
   },
   setUserType(ctx, payload) {
     localStorage.setItem('userType', payload);
@@ -216,23 +203,15 @@ export const actions = {
   logoutAdmin(ctx, payload) {
     localStorage.removeItem('adminRole');
     localStorage.removeItem('adminVerifyToken');
+    localStorage.removeItem('adminName');
     localStorage.removeItem('userType');
     localStorage.removeItem('adminMobile');
     localStorage.removeItem('adminLoginToken');
     localStorage.removeItem('otpCode');
   },
-  setAdminActiveSortType({ dispatch, commit }, payload) {
+  async setAdminActiveSortType({ dispatch, commit }, payload) {
     commit('SET_ADMIN_ACTIVE_SORT_TYPE', payload);
-    if (payload == 'AVAILABLE_EXAMS') {
-      dispatch('fetchAdminActiveExams');
-    } else if (payload == 'EXPIRED_EXAMS') {
-      dispatch('fetchAdminExpiredExams');
-    } 
-    else {
-      dispatch('fetchAdminActiveExams');
-      dispatch('fetchAdminExpiredExams');
-      // dispatch('fetchAdminAllExams');
-    }
+    dispatch('fetchAdminAllExams', payload);
   },
   setAdminOnlyExamChecked({ dispatch, commit }, payload) {
     commit('SET_ADMIN_ONLY_EXAM_CHECKED', payload);
@@ -255,20 +234,10 @@ export const actions = {
 
     const url = '/operator/test/testLists';
     let result = await execute('POST', url, requestBody);
-    console.log("result1: ", result)
     if (result && (result.success === true)) {
-      commit('SET_ADMIN_ACTIVE_EXAMS', result.data.tests);
-      return result.data.tests;
+      commit('SET_ADMIN_ACTIVE_EXAMS', result.data.newTest);
+      return result.data.newTest;
       } else if (result && (result.success === false)) {
-      // let errorMessage = ''
-      // if (searchQuery.length) {
-      //   errorMessage = `نتیجه ای برای عبارت ${searchQuery} درآزمون های پیش رو وجود ندارد`
-      // } else {
-      //   errorMessage = "نتیجه ای برای آزمون های پیش رو وجود ندارد"
-      // }
-      // this.$toast.error(
-      //   errorMessage
-      //   )  
       commit('SET_ADMIN_ACTIVE_EXAMS', {});
       return false;
     } else {
@@ -293,20 +262,10 @@ export const actions = {
 
     const url = '/operator/test/testLists';
     let result = await execute('POST', url, requestBody);
-    console.log("result2: ", result.data)
     if (result && (result.success === true)) {
-      commit('SET_ADMIN_EXPIRED_EXAMS', result.data.tests);
-      return result.data.tests;
+      commit('SET_ADMIN_EXPIRED_EXAMS', result.data.oldTest);
+      return result.data.oldTest;
     } else if (result && (result.success === false)) {
-      // let errorMessage = ''
-      // if (searchQuery.length) {
-      //   errorMessage = `نتیجه ای برای عبارت ${searchQuery} درآزمون های برگذار شده وجود ندارد`
-      // } else {
-      //   errorMessage = "نتیجه ای برای آزمون های برگذار شده وجود ندارد"
-      // }
-      // this.$toast.error(
-      //   errorMessage
-      // )  
       commit('SET_ADMIN_EXPIRED_EXAMS',{});
       return false;
     } else {
@@ -319,30 +278,57 @@ export const actions = {
     }
   },
   async fetchAdminAllExams({ dispatch, commit, state }, payload) {
-    
-    return await this.$axios.post(url, qs.stringify(requestBody), { headers: headers }).then((res) => {
-      if (res.data && (res.data.success === true)) {
-        commit("SET_ADMIN_LOGIN_DATA", res.data.data);
-        commit("SET_ADMIN_LOGIN", true);
-        dispatch('setAdminVerifyData', res.data.data);
-        dispatch('setUserType', 'admin');
-        return res.data;
-      } else if (res.data && (res.data.success === false)) {
-        this.$toast.error(
-          "کد تایید صحیح نمی باشد!"
-        )  
-        return false;
-      } else {
-        console.log("verify error store");
-        this.$toast.error(
-          "خطای کد تایید"
-        )  
-        return false;
-      }
-    }).catch((error) => {
-      console.log("RES error: ", error);
-    })
+    let availableExams = false;
+    let expiredExams = true;
+    let searchQuery = state.admin.examSearch;
+   
+    if (payload == 'AVAILABLE_EXAMS') {
+      availableExams = true;
+      expiredExams = false;
+    } else if (payload == 'EXPIRED_EXAMS') {
+      availableExams = false;
+      expiredExams = true;
+    }
+    else {
+      availableExams = false;
+      expiredExams = false;
+    }
 
+
+    let requestBody = new URLSearchParams();
+
+    requestBody.append("newTest", availableExams);
+    requestBody.append("oldTest", expiredExams);
+    requestBody.append("query", searchQuery);
+
+    const url = '/operator/test/testLists';
+    let result = await execute('POST', url, requestBody);
+    if (result && (result.success === true)) {
+      let active = [];
+      let expired = [];
+      let current = [];
+      if (result.data.newTest && result.data.newTest.length) {
+        active = result.data.newTest;
+      } 
+      if (result.data.oldTest && result.data.oldTest.length) {
+        expired = result.data.oldTest;
+      }
+      let temp = [];
+      temp = [...expired];
+      current = [...active, ...temp];
+      commit('SET_ADMIN_CURRENT_EXAMS', current);
+      return current;
+    } else if (result && (result.success === false)) {
+      commit('SET_ADMIN_CURRENT_EXAMS',{});
+      return false;
+    } else {
+      console.log("CURRENT exams error store");
+      this.$toast.error(
+        "خطای بارگذاری آزمون"
+      )
+      commit('SET_ADMIN_CURRENT_EXAMS',{});
+      return false;
+    }
   },
 }
 

@@ -2,9 +2,10 @@
   <div class="exams__wrapper">
     <div class="action-bar">
       <div class="action-bar__new-exam-wrapper">
-        <div class="action-bar__new-exam" @click="goToNewExamPage()">
+        <div class="action-bar__new-exam" v-b-modal.modal-new-exam >
           + آزمون جدید
         </div>
+        <!-- <b-tooltip target="new-exam" placement="left" >به زودی</b-tooltip> -->
       </div>
       <div class="action-bar__search-wrapper">
         <input v-model="examSearch" @keyup="search" class="action-bar__search" type="text" placeholder="جستجو...">
@@ -13,17 +14,15 @@
 
     <SortTypes />
 
-    <!-- Available exams  -->
-    <div v-if="(getAdminActiveSortType === 'AVAILABLE_EXAMS') || (getAdminActiveSortType === 'ALL_EXAMS')" class="exams__list-wrapper">
-      <SingleExam :examsList="getAdminActiveExams" :isExpired="false" />
+    <div class="exams__list-wrapper">
+      <SingleExam :examsList="getAdminCurrentExams" />
     </div>
 
-    <!-- Expired exams  -->
-    <div v-if="(getAdminActiveSortType === 'EXPIRED_EXAMS') || (getAdminActiveSortType === 'ALL_EXAMS')" class="exams__list-wrapper">
-      <SingleExam :examsList="expiredExamList" :isExpired="true" />
-    </div>
-
+    <b-modal id="modal-new-exam"  size="md" hide-footer centered>
+      <h1 class="my-4 text-center" style="height: 120px;display:flex; align-items:center;justify-content:center;color: #949494;font-weight: bold;">به زودی...</h1>
+    </b-modal>
   </div>
+
 </template>
 
 <script>
@@ -44,27 +43,14 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'getAdminActiveExams',
-      'getAdminExpiredExams',
-      'getAdminActiveSortType',
+      'getAdminCurrentExams',
       'getAdminActiveSortType',
     ]),
     examList: {
       get: function(data) {
-        console.log("active result: ", this.getAdminActiveExams)
-        return this.getAdminActiveExams;
+        return this.getAdminCurrentExams;
       },
       set: function(newValue) {
-        console.log("newValue: ", newValue)
-        return newValue;
-      }
-    },
-    expiredExamList: {
-      get: function(data) {
-        return this.getAdminExpiredExams;
-      },
-      set: function(newValue) {
-        console.log("newValue2: ", newValue)
         return newValue;
       }
     },
@@ -96,14 +82,15 @@ export default {
     },
     fetchRequest() {
       let activeSortType = this.getAdminActiveSortType;
-      if (activeSortType === 'AVAILABLE_EXAMS') {
-        this.fetchAdminActiveExams();
-      } else if (activeSortType === 'EXPIRED_EXAMS') {
-        this.fetchAdminExpiredExams();
-      } else if (activeSortType === 'ALL_EXAMS') {
-        this.fetchAdminActiveExams();
-        this.fetchAdminExpiredExams();
-      }
+      this.fetchAdminAllExams(activeSortType);
+      // if (activeSortType === 'AVAILABLE_EXAMS') {
+      //   this.fetchAdminActiveExams();
+      // } else if (activeSortType === 'EXPIRED_EXAMS') {
+      //   this.fetchAdminExpiredExams();
+      // } else if (activeSortType === 'ALL_EXAMS') {
+      //   this.fetchAdminActiveExams();
+      //   this.fetchAdminExpiredExams();
+      // }
     },
 
   },
@@ -142,6 +129,10 @@ export default {
       
       &:active {
         background-color: darken(#BC11FD, 12%) !important;
+      }
+
+      &:focus {
+        outline: none;
       }
 
       &-wrapper {

@@ -7,7 +7,21 @@ export default async function({ store, redirect, route}) {
   let userType = localStorage.getItem("userType");
   // let isAdminLoggedIn = store.getters.getIsAdminLoggedIn;
   let isAdminLoggedIn = localStorage.getItem("adminVerifyToken");
-  let isStudentLoggedIn = store.getters.getIsStudentLoggedIn;
+  let isStudentLoggedIn = localStorage.getItem("studentToken");
+
+
+  if (path == "/" && (userType == 'student') && isStudentLoggedIn) {
+    console.log("you are logged in as Student");
+    return redirect("/student");
+  } else if ((path.startsWith('/student') && !isStudentLoggedIn)) {
+    return redirect("/");
+  } else if ((path.startsWith('/admin') && (userType == 'student') && !isAdminLoggedIn)) {
+    return redirect("/student");
+  } else if ((path.startsWith('/admin') && (userType == null))) {
+    return redirect("/operator");
+  } else if ((path.startsWith('/operator') && (userType == 'student') && isStudentLoggedIn)) {
+    return redirect("/student");
+  }  
 
   if (path == "/" && (userType == 'admin') && isAdminLoggedIn) {
     console.log("you are logged in as ADMIN");
@@ -24,18 +38,7 @@ export default async function({ store, redirect, route}) {
     return redirect("/");
   }
 
-  if (path == "/" && (userType == 'student') && isStudentLoggedIn) {
-    console.log("you are logged in as ADMIN");
-    return redirect("/student");
-  } else if ((path.startsWith('/student') && !isStudentLoggedIn)) {
-    return redirect("/");
-  } else if ((path == '/' && isStudentLoggedIn)) {
-    return redirect("/student");
-  } else if ((path.startsWith('/admin') && (userType == 'student') && !isAdminLoggedIn)) {
-    return redirect("/student");
-  } else if ((path.startsWith('/admin') && (userType == null))) {
-    return redirect("/operator");
-  }
+
 
   // if (!route.matched.length) {
   //   console.log(404);

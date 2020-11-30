@@ -7,11 +7,11 @@
       <b-dropdown variant="link" menu-class="user__name-menu" toggle-class="user__name-wrapper">
         <template #button-content>
           <div class="user__name">
-            محمد ناصر دژبرد
+            {{getStudentName}} {{getStudentFamily}}
           </div>
         </template>
         <b-dropdown-item href="#">پروفیل</b-dropdown-item>
-        <b-dropdown-item href="#">خروج</b-dropdown-item>
+        <b-dropdown-item href="#" @click="logout">خروج</b-dropdown-item>
       </b-dropdown>
     </div>
     <div class="container">
@@ -23,6 +23,32 @@
     </div>
   </div>
 </template>
+
+<script>
+import { mapActions, mapGetters } from 'vuex'
+
+export default {
+  data() {
+    return {
+    }
+  },
+  computed: {
+    ...mapGetters([
+      'getStudentName',
+      'getStudentFamily',
+    ])
+  },
+  methods: {
+    ...mapActions([
+      'logoutStudent',
+    ]),
+    logout() {
+      this.logoutStudent();
+      this.$router.push('/');
+    },
+  }
+}
+</script>
 
 <style lang="scss">
 html {
@@ -94,7 +120,6 @@ body {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      width: 122px;
       color: #515151;
       padding: 0;
 

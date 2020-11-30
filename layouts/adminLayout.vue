@@ -7,11 +7,10 @@
       <b-dropdown variant="link" menu-class="admin__name-menu" toggle-class="admin__name-wrapper">
         <template #button-content>
           <div class="admin__name">
-            ظهیر دژبرد
+            {{getAdminName}}
           </div>
         </template>
-        <b-dropdown-item href="#" @click="goToProfile">پروفیل</b-dropdown-item>
-        <b-dropdown-item href="#">آرشیو</b-dropdown-item>
+        <b-dropdown-item href="#" v-b-modal.modal-archive>آرشیو</b-dropdown-item>
         <b-dropdown-item href="#" @click="logout">خروج</b-dropdown-item>
       </b-dropdown>
     </div>
@@ -22,24 +21,30 @@
         </div>
       </div>
     </div>
+
+    <b-modal id="modal-archive"  size="md" hide-footer centered>
+      <h1 class="my-4 text-center" style="height: 120px;display:flex; align-items:center;justify-content:center;color: #949494;font-weight: bold;">به زودی...</h1>
+    </b-modal>
   </div>
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 
 export default {
   data() {
     return {
     }
   },
+  computed: {
+    ...mapGetters([
+      'getAdminName'
+    ])
+  },
   methods: {
     ...mapActions([
       'logoutAdmin',
     ]),
-    goToProfile() {
-      this.$router.push('/admin/profile');
-    },
     logout() {
       this.logoutAdmin();
       this.$router.push('/operator');
@@ -97,6 +102,10 @@ body {
   }
 }
 
+.dropdown-toggle::after {
+  margin-right: 0.255em;
+}
+
 .admin {
 
   &__navbar {
@@ -120,7 +129,6 @@ body {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      width: 86px;
       color: #515151;
       padding: 0;
 

@@ -63,3 +63,30 @@ input[type=number] {
 .custom-control-input:active ~ .custom-control-label::before {
 	background-color: lighten(#fdbc11, 27%) !important;
 }
+
+.custom-radio {
+	padding-left: unset;
+	padding-right: 24px;
+	margin-bottom: 12px;
+	// border: 1px solid #ccc;
+	// border-radius: 6px;
+	// padding: 8px;
+	// padding-right: 32px;
+	// cursor: pointer;
+}
+
+.custom-radio label {
+	cursor: pointer;
+}
+
+.custom-radio label::after {
+	left: unset;
+	right: -1.5rem;
+	cursor: pointer;
+}
+
+.custom-radio label::before {
+	left: unset;
+	right: -1.5rem;
+	cursor: pointer;
+}

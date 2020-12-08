@@ -6,24 +6,29 @@ export default function(ctx) {
     (config) => {
       try {
 
-        let studentToken = localStorage.getItem('studentToken')
-        let adminLoginToken = localStorage.getItem('adminLoginToken')
-        let adminVerifyToken = localStorage.getItem('adminVerifyToken')
-        config.headers.common['Content-Type'] = 'application/x-www-form-urlencoded'
-        if (adminVerifyToken) {
-          config.headers.Authorization = `Bearer ${adminVerifyToken}`
-        } else if (adminLoginToken) {
-          config.headers.Authorization = `Bearer ${adminLoginToken}`
+        let student = JSON.parse(localStorage.getItem('student'));
+        let studentToken = student ? student.token : null;
+        
+        let adminLogin = JSON.parse(localStorage.getItem('adminLogin'));
+        let adminVerify = JSON.parse(localStorage.getItem('adminVerify'));
+        let adminLoginToken = adminLogin ? adminLogin.loginToken : null;
+        let adminVerifyToken = adminVerify ? adminVerify.verifyToken : null;
+
+        config.headers.common['Content-Type'] = 'application/x-www-form-urlencoded';
+
+        if (studentToken) {
+          config.headers.Authorization = `Bearer ${studentToken}`;
+        } else if (adminVerifyToken) {
+          config.headers.Authorization = `Bearer ${adminVerifyToken}`;
         } else {
-          config.headers.Authorization = `Bearer ${studentToken}`
+          config.headers.Authorization = `Bearer ${adminLoginToken}`;
         }
 
-        return config
+        return config;
       } catch (error) {
       }
     },
     (error) => {
-      console.log("request", error)
       // Promise.reject({ meta: error, data: null });
     }
   )

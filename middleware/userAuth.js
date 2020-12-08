@@ -5,13 +5,12 @@ export default async function({ store, redirect, route}) {
 
   let path = route.path;
   let userType = localStorage.getItem("userType");
-  // let isAdminLoggedIn = store.getters.getIsAdminLoggedIn;
-  let isAdminLoggedIn = localStorage.getItem("adminVerifyToken");
-  let isStudentLoggedIn = localStorage.getItem("studentToken");
-
+  let student = JSON.parse(localStorage.getItem('student'));
+  let isStudentLoggedIn = student ? student.token : null;
+  let adminVerify = JSON.parse(localStorage.getItem("adminVerify"));
+  let isAdminLoggedIn = adminVerify ? adminVerify.verifyToken : null;
 
   if (path == "/" && (userType == 'student') && isStudentLoggedIn) {
-    console.log("you are logged in as Student");
     return redirect("/student");
   } else if ((path.startsWith('/student') && !isStudentLoggedIn)) {
     return redirect("/");
@@ -21,7 +20,9 @@ export default async function({ store, redirect, route}) {
     return redirect("/operator");
   } else if ((path.startsWith('/operator') && (userType == 'student') && isStudentLoggedIn)) {
     return redirect("/student");
-  }  
+  } else if ((path.startsWith('/register') && (userType == 'student') && isStudentLoggedIn)) {
+    return redirect("/student");
+  } 
 
   if (path == "/" && (userType == 'admin') && isAdminLoggedIn) {
     console.log("you are logged in as ADMIN");

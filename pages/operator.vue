@@ -196,7 +196,6 @@ export default {
       if (isPhoneValid) {
         this.login();
       }
-      // this.$router.push('/admin/exams')
     },
     async onSubmitVerify(e) {
       e.preventDefault();
@@ -204,7 +203,6 @@ export default {
       if (isPhoneValid) {
         this.verify();
       }
-      // this.$router.push('/admin/exams')
     },
   }
 }

@@ -1,121 +1,224 @@
 <template>
-  <div class="courses__wrapper">
-    <div class="courses__sort">
-      <div class="courses__sort-title">
-        مرتب سازی بر اساس: 
+  <div class="exam__wrapper">
+    <div class="exam">
+      <div class="exam__header">
+        <div class="row no-gutters w-100" >
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="exam__name">
+              <div class="exam__name-label">
+                آزمون درس: 
+              </div>
+              <div class="exam__name-value">
+                {{currentExam.lessonTitle}}
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="exam__timer">
+              <div class="exam__timer-label">
+                زمان تا پایان آزمون: 
+              </div>
+              <div v-if="hours && minutes && seconds" class="exam__timer-value">
+                <!-- {{examTimeCounter}} -->
+                {{hours}}:{{minutes}}:{{seconds}}
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="exam__questions-left">
+              <div class="exam__questions-left-label">
+                سوالات بدون پاسخ: 
+              </div>
+              <div class="exam__questions-left-value">
+                <!-- {{currentExam.noneAnsweredQuestions}} -->
+                {{noneAnswered}}
+              </div>
+            </div>
+          </div>
+          <!-- <div class="col-12 col-md-6 col-lg-2">
+            <div class="exam__marked">
+              <div class="exam__marked-label">
+                سوالات نشان شده: 
+              </div>
+              <div class="exam__marked-value">
+                0
+              </div>
+            </div>
+          </div> -->
+        </div>
       </div>
-      <ul class="courses__sort-list">
-        <li 
-          v-for="(sortType, index) in sortTypes" 
-          class="courses__sort-types"
-          :key="index" 
-          @click="setActiveSortType(sortType.id)"
-          :class="{' courses__sort-types--active': isActiveSortType(sortType.id)}">
-            {{sortType.title}}
-        </li>
-      </ul>               
+      <div class="exam__list">
+        <div v-for="(question, index) in currentExam.questions" class="exam__question" :key="index">
+          <div class="exam__title" v-html="(index + 1) + '- ' + question.title">
+            <!-- {{index+1}}- {{question.title}} -->
+          </div>
+          <div class="exam__options-wrapper">
+            <b-form-group :name="'form-group-' + index" label="">
+              <b-form-radio-group
+                v-model="question.selected"
+                :name="'radio-group-' + index"
+                stacked
+                @input="saveAnswers"
+              >
+                <template v-for="(option, index2) in question.options">
+                  <b-form-radio :key="option.value + index2" :value="option.value">
+                    <span v-html="option.text" style="display:flex; align-items:center;"></span>
+                  </b-form-radio>
+                </template>
+              </b-form-radio-group>
+            </b-form-group>
+          </div>
+        </div>
+      </div>
+      <div class="exam__submit">
+        <b-button block variant="success" @click="openConfirm">پایان آزمون</b-button>
+      </div>
     </div>
+
+    <b-modal ref="modal-confirm" id="modal-confirm" title="BootstrapVue" hide-footer hide-header centered>
+      <div style="text-align:center; margin: 20px 0 30px 0;">
+        <div v-if="noneAnswered">
+          {{noneAnswered}} سوال بدون پاسخ باقی مانده است. آیا از پایان آزمون مطمئن هستید؟
+        </div>
+        <div v-else>
+          آیا از پایان آزمون مطمئن هستید؟
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <b-button variant="success" @click="submitQuestions">بله، مطمئن هستم</b-button>
+        <b-button variant="outline-dangerd" @click="closeConfirm">خیر، ادامه می دهم</b-button>
+      </div>
+    </b-modal>
   </div>
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
+import moment from 'moment';
+
 export default {
   layout: 'studentLayout',
+  components: {
+  },
   data() {
     return {
-      sortTypes: [
-        {
-          id: 1,
-          title: 'تاریخ و ساعت',
-        },
-        {
-          id: 2,
-          title: 'امتحانات امروز',
-        },
-        {
-          id: 3,
-          title: 'امتحانات آینده',
-        },
-        {
-          id: 4,
-          title: 'تصحیح شده',
-        },
-      ],
-      activeSortType: 1
+      currentExam: [],
+      hours: null,
+      minutes: null,
+      seconds: null,
+      noneAnswered: null,
     }
   },
+  computed: {
+    ...mapGetters([
+      'getCurrentExam',
+    ]),
+  },
   methods: {
-    isActiveSortType(SortTypeId) {
-      return this.activeSortType == SortTypeId
+    ...mapActions([
+      'loadAllStudentData',
+      'updateCurrentExam',
+      'setIsExamStarted',
+      'submitExam',
+    ]),
+    openConfirm() {
+      this.$refs['modal-confirm'].show();
     },
-    setActiveSortType(SortTypeId) {
-      this.activeSortType = SortTypeId
+    closeConfirm() {
+      this.$refs['modal-confirm'].hide();
+    },
+    submitQuestions() {
+      let submited = this.currentExam.questions.map((item, index) => {
+        return {questionID: item.id, answer: item.selected}
+      })
+      let readyData = {
+        testID: this.currentExam.testID,
+        answerStudent: JSON.stringify({
+          testId: this.currentExam.testID,
+          answers:[
+            ...submited
+          ],          
+        })
+      }
+      console.log(readyData)
+      let result = this.submitExam(readyData);
+      if(result) {
+        this.$router.push('/student');
+        this.$toast.success(
+          "آزمون با موفقیت به پایان رسید"
+        )
+      }
+    },
+    selectOption(index, selected) {
+      console.log(index, selected)
+      this.questions[index].selected = selected;
+    },
+    saveAnswers() {
+      let length = this.currentExam.questions.length;
+      let count = 0;
+      this.currentExam.questions.map((item, index) => {
+        if (item.selected) {
+          count++;
+        } else {
+
+        }
+      })
+      this.noneAnswered = length - count;
+      this.updateCurrentExam(this.currentExam);
+    },
+    initiateTimer() {
+      let start = moment(this.currentExam.startTime, "HH:mm:ss a");
+      let end = moment(this.currentExam.endTime, "HH:mm:ss a");
+      let duration = moment.duration(end.diff(start));
+      let milliseconds = parseInt(duration.asMilliseconds());
+      const self = this;
+      let counter = 0;
+      let countdown = setInterval(function(){
+        function convertMS( milliseconds ) {
+          let hour, minute, seconds;
+          seconds = Math.floor(milliseconds / 1000);
+          minute = Math.floor(seconds / 60);
+          seconds = seconds % 60;
+          hour = Math.floor(minute / 60);
+          minute = minute % 60;
+          hour = hour % 24;
+
+          return {
+            hour: hour,
+            minute: minute,
+            second: seconds,
+          }
+        }
+        let result = convertMS(milliseconds - counter);
+        let hours = result.hour < 10 ? `0${result.hour}` : `${result.hour}`;
+        let minutes = result.minute < 10 ? `0${result.minute}` : `${result.minute}`;
+        let seconds = result.second < 10 ? `0${result.second}` : result.second;
+        self.hours = hours;
+        self.minutes = minutes;
+        self.seconds = seconds;
+        if (hours <= 0 && minutes <= 0 && seconds <= 0 ) {
+          clearInterval(countdown);
+        }
+        counter = counter + 1000;
+      }, 1000)
     },
   },
   mounted() {
-    this.setActiveSortType(this.activeSortType);
-  }
+    this.currentExam = this.getCurrentExam;
+    this.noneAnswered = this.currentExam.noneAnsweredQuestions
+    this.initiateTimer();
+    this.setIsExamStarted({data: true});
+  },
+  async created() {
+    this.loadAllStudentData();
+  },
 }
 </script>
 
 <style lang="scss" scoped>
+  .exam {
 
-  .courses {
-
-    &__sort {
-      display: flex;
-      flex-direction: column;
-      text-align: right;
-      margin-bottom: 32px;
-      background: #fff;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 5px 10px 20px 0 rgba(0, 0, 0, 0.05);
-
-      &-title {
-        margin-bottom: 16px;
-        font-size: 12px;
-      }
-
-      &-list {
-        padding: 0;
-        margin: 0;
-        list-style: none;
-        display: flex;
-        font-size: 11px;
-        justify-content: space-between;
-        text-align: center;
-      }
-
-      &-types {
-        padding: 6px;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.2s;
-
-        &--active {
-          color: #fff;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-          background-color: #BC11FD;
-
-          &:hover {
-            opacity: 1 !important;
-          }
-        }
-
-        &:hover {
-          opacity: 0.7;
-        }
-      }
-    }
-
-    &__list {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-start;
-    }
-
-    &__single {
+    &__header {
       display: flex;
       margin-bottom: 24px;
       padding: 15px;
@@ -123,223 +226,107 @@ export default {
       border-radius: 10px;
       box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
       width: 100%;
-    }
-
-    &__image {
-      width: 100%;
-      min-width: 100px;
-      position: relative;
-
-      &-wrapper {
-        position: relative;
-        max-width: 100px;
-        min-width: 100px;
-        border-radius: 4px;
-        overflow: hidden;
-        box-shadow: 0px 8px 13px -6px #ccc;
-
-        &::after {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: 100%;
-          z-index: 1;
-        }
-      }
-
-      &-badge {
-        position: absolute;
-        top: 6px;
-        right: -2px;
-        font-size: 10px;
-        font-weight: bold;
-        color: #fff;
-        background-color: #fdbc11;
-        padding: 4px 6px 4px 12px;
-        border-top-left-radius: 20px;
-        border-bottom-left-radius: 20px;
-        box-shadow: -2px 2px 2px 0px rgba(72, 72, 72, 0.18);
-      }
-    }
-
-    &__details {
-      text-align: right;
-      // margin-right: 14px;
-      font-size: 13px;
-      width: 100%;
-
-      &-wrapper {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        margin-right: 20px;
-        width: 100%;
-      }
+      justify-content: space-between;
+      flex-wrap: wrap;
     }
 
     &__title {
+      margin-bottom: 8px;
+    }
 
-      &-wrapper {
-        display: flex;
-        margin-bottom: 3px;
-      }
+    &__name {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
 
       &-label {
-        width: 100%;
-        max-width: 32px;
-        margin-left: 6px;
-      }
-
-      &-value {
-        width: 100%;
-        color: #8a8a8a;
+        margin-left: 4px;
       }
     }
 
-    &__date {
-
-      &-wrapper {
-        display: flex;
-        margin-bottom: 3px;
-      }
+    &__timer {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
 
       &-label {
-        margin-left: 6px;
-        width: 100%;
-        max-width: 63px;
+        margin-left: 4px;
       }
+    }
 
-      &-value {
-        color: #8a8a8a;
+    &__questions-left {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+
+      &-label {
+        margin-left: 4px;
       }
+    }
 
+    &__marked {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+
+      &-label {
+        margin-left: 4px;
+      }
+    }
+
+    &__list {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 24px;
+      padding: 15px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      text-align: right;
     }
     
-    &__time {
-
-      &-wrapper {
-        display: flex;
-        margin-bottom: 3px;
-      }
-
-      &-label {
-        margin-left: 6px;
-        width: 100%;
-        max-width: 70px;
-
-      }
-
-      &-value {
-        color: #8a8a8a;
-      }
+    &__question {
+      margin-bottom: 32px;
     }
 
-    &__start {
-      // margin-right: 14px;
-      opacity: 0.58;
-      font-size: 10px;
-      background-color: #28a745;
-      color: #fff;
-      // font-weight: bold;
-      // border: 1px solid #28a745;
-      display: inline-block;
-      text-align: center;
-      vertical-align: middle;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-      padding: 0.375rem 0.75rem;
-      line-height: 1.5;
-      border-radius: 0.25rem;
-      width: 100%;
-      // transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
-      transition: all 0.15s ease-in-out;
-      
-      &-wrapper {
-        display: flex;
-      }
-
-      &--active {
-        opacity: 1;
-        background-color: #28a745;
-        color: #fff;
-        font-weight: normal;
-        cursor: pointer;
-        font-size: 1rem;
-        box-shadow: 0px 8px 13px -6px #ccc;
-        line-height: 30px;
-        
-        &:hover {
-          background-color: darken(#28a745, 3%);
-        }
-        
-        &:active {
-          background-color: darken(#28a745, 7%) !important;
-          // border: none;
-          // box-shadow: 4px 10px 10px -4px rgba(253, 188, 17, 0.32);
-        }
-      }
+    &__submit {
+      margin-bottom: 56px;
     }
   }
 
   // Medium devices (tablets, 768px and up)
   @media (min-width: 767.98px) {
-    .courses {
-
-      &__sort {
-
-        &-list {
-          justify-content: flex-start;
-        }
-
-        &-types {
-          margin: 0 15px;
-        }
+    .exam {
+      &__name {
+        justify-content: flex-start;
       }
 
-      &__single {
-        width: 332px;
-        margin-left: 24px;
+      &__timer {
+        justify-content: flex-start;
       }
 
-      &__single:nth-child(2n+0) {
-        margin-left: 0px;
+      &__questions-left {
+        justify-content: flex-start;
+      }
+
+      &__marked {
+        justify-content: flex-start;
       }
     }
   }
   
   // large devices (laptops, 768px and up)
   @media (min-width: 991.98px) {
-    .courses {
-      &__single {
-        width: 452px;
-        margin-left: 24px;
-      }
+    .exam {
 
-      &__single:nth-child(2n+0) {
-        margin-left: 0px;
-      }
     }
   }
 
   // extra large devices (desktops, 768px and up)
   @media (min-width: 1199.98px) {
-    .courses {
-      &__single {
-        width: 354px;
-        margin-left: 24px;
-      }
-
-      &__single:nth-child(2n+0) {
-        margin-left: 24px;
-      }
-
-      &__single:nth-child(3n+0) {
-        margin-left: 0px;
-      }
+    .exam {
+      
     }
   }
 </style>

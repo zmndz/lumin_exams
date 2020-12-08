@@ -23,6 +23,7 @@ export default {
   // Plugins to run before rendering page (https://go.nuxtjs.dev/config-plugins)
   plugins: [
     { src: '@/plugins/interceptor', mode: 'client' },
+    { src: '@/plugins/vue-jalali-moment' },
   ],
 
   // Auto import components (https://go.nuxtjs.dev/config-components)
@@ -56,7 +57,7 @@ export default {
 
   toast: {
     position: 'bottom-right',
-    duration: 3000,
+    duration: 4000,
     keepOnHover: true,
     register: [ // Register custom toasts
       {

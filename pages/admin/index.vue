@@ -1,12 +1,11 @@
 <template>
   <div class="exams__wrapper">
     <div class="action-bar">
-      <div class="action-bar__new-exam-wrapper">
+      <!-- <div class="action-bar__new-exam-wrapper">
         <div class="action-bar__new-exam" v-b-modal.modal-new-exam >
           + آزمون جدید
         </div>
-        <!-- <b-tooltip target="new-exam" placement="left" >به زودی</b-tooltip> -->
-      </div>
+      </div> -->
       <div class="action-bar__search-wrapper">
         <input v-model="examSearch" @keyup="search" class="action-bar__search" type="text" placeholder="جستجو...">
       </div>
@@ -26,9 +25,9 @@
 </template>
 
 <script>
+import { mapState, mapActions, mapGetters } from 'vuex'
 import SingleExam from '~/components/admin/SingleExam'
 import SortTypes from '~/components/admin/SortTypes'
-import { mapState, mapActions, mapGetters } from 'vuex'
 
 export default {
   layout: 'adminLayout',
@@ -46,14 +45,14 @@ export default {
       'getAdminCurrentExams',
       'getAdminActiveSortType',
     ]),
-    examList: {
-      get: function(data) {
-        return this.getAdminCurrentExams;
-      },
-      set: function(newValue) {
-        return newValue;
-      }
-    },
+    // examList: {
+    //   get: function(data) {
+    //     return this.getAdminCurrentExams;
+    //   },
+    //   set: function(newValue) {
+    //     return newValue;
+    //   }
+    // },
   },
   methods: {
     ...mapActions([
@@ -83,14 +82,6 @@ export default {
     fetchRequest() {
       let activeSortType = this.getAdminActiveSortType;
       this.fetchAdminAllExams(activeSortType);
-      // if (activeSortType === 'AVAILABLE_EXAMS') {
-      //   this.fetchAdminActiveExams();
-      // } else if (activeSortType === 'EXPIRED_EXAMS') {
-      //   this.fetchAdminExpiredExams();
-      // } else if (activeSortType === 'ALL_EXAMS') {
-      //   this.fetchAdminActiveExams();
-      //   this.fetchAdminExpiredExams();
-      // }
     },
 
   },

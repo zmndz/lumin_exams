@@ -1,6 +1,6 @@
 <template>
   <div v-if="isExamListEmpty" class="">
-    <div v-if="!getAdminOnlyExamsChecked" class="exams__list">
+    <div v-if="(!getAdminOnlyExamsChecked)" class="exams__list">
       <div class="exams__single-wrapper" v-for="(exam, index) in examsList" :key="index">
         <div class="exams__single">
           <div class="exams__image-wrapper">
@@ -43,19 +43,32 @@
             </div>
             <div :key="index" class="exams__questions-upload-wrapper">
   <!-- To do: fix fileupload v-model -->
-              <b-form-file :id="'js-examQuestionsFile-' + index" class="exams__questions-upload" v-model="zzz.examQuestionsFile" plain></b-form-file>
-              <div v-if="exam.isExpire" class="exams__questions-upload-expired">
-                برگذار شده
-              </div>
+              <b-form-file 
+                :id="'js-examQuestionsFile-' + index" 
+                class="exams__questions-upload" 
+                plain accept=".doc,.docx,.xml,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+                v-model="questionFile[index]" 
+                @change="setFile($event, index, exam)"
+              >
+              </b-form-file>
+              <!-- <div v-if="exam.isExpire" class="exams__questions-upload-expired">
+                مشاهده نتایج
+              </div> -->
+              <b-button v-if="exam.isExpire" variant="outline-dark" @click="openReport(exam.testID)">
+                مشاهده نتایج
+              </b-button>
+
               <div v-else>
                 <div v-if="!exam.isActive" class="exams__questions-upload-trigger" @click="openUploadDialog('js-examQuestionsFile-' + index, index)">
+                <!-- <div class="exams__questions-upload-trigger" @click="openUploadDialog('js-examQuestionsFile-' + index, index)"> -->
                   <span class="exams__questions-upload-icon">+</span> آپلود سوالات
                 </div>
                 <div v-else class="exams__questions-upload-file">
-                  <div class="exams__questions-upload-file-name" @click="setCurrentExamPreview(exam)">
-                    مشاهده سوالات: {{ exam.examQuestionsFile ? exam.examQuestionsFile.name : '' }}
+                <!-- <div class="exams__questions-upload-file"> -->
+                  <div class="exams__questions-upload-file-name" @click="setCurrentExamPreview(exam.questions, true, index)">
+                    مشاهده سوالات: {{ exam ? exam.nameFile : '' }}
                   </div>
-                  <div class="exams__questions-upload-file-remove" @click="removeExamFile(index)">
+                  <div class="exams__questions-upload-file-remove" @click="removeFile(index, exam.testID)">
                     x
                   </div>
                 </div>
@@ -65,6 +78,61 @@
         </div>
       </div>
 
+      <b-modal v-if="currentExamReport" ref="modal-total-report" id="modal-total-report" centered>
+        <template #modal-header="{ close }">
+          <div style="display: flex; justify-content: space-between;width: 100%;">
+            <!-- <div>
+              سوالات آزمون <strong>{{currentExamReport.lessonTitle}}</strong>
+            </div> -->
+            <div @click="close()" style="cursor: pointer;">X</div>
+          </div>
+        </template>
+        <div class="exams__report">
+          <div class="exams__report-header exams__report-row">
+            ردیف
+          </div>
+          <div class="exams__report-header exams__report-name">
+            نام و نام‌خانوادگی
+          </div>
+          <div class="exams__report-header exams__report-national-code">
+            کد ملی
+          </div>
+          <div class="exams__report-header exams__report-student-id">
+            شماره دانشجویی
+          </div>
+          <div class="exams__report-header exams__report-score">
+            نمره
+          </div>
+        </div>
+        <div v-for="(report, index) in currentExamReport" :key="index" class="exams__report-content">
+          <div class="exams__report-cell exams__report-row">
+            {{index+1}}
+          </div>
+          <div class="exams__report-cell exams__report-name">
+            {{report.name}} {{report.family}}
+          </div>
+          <div class="exams__report-cell exams__report-national-code">
+            {{report.nationalCode}}
+          </div>
+          <div class="exams__report-cell exams__report-student-id">
+            {{report.studentID}}
+          </div>
+          <div class="exams__report-cell exams__report-score">
+            {{report.resultStudent}}
+          </div>
+        </div>
+        <template #modal-footer="{ ok }">
+          <div style="display: flex; justify-content: space-between;width: 100%;">
+            <b-button variant="success" @click="ok()">
+              بستن
+            </b-button>
+            <!-- <b-button size="sm" variant="outline-danger" @click="removeFile()">
+              حذف سوالات
+            </b-button> -->
+          </div>
+        </template>
+      </b-modal>
+      
       <b-modal v-if="currentExamPreview" ref="modal-questions-preview" id="modal-questions-preview" centered>
         <template #modal-header="{ close }">
           <div style="display: flex; justify-content: space-between;width: 100%;">
@@ -74,17 +142,23 @@
             <div @click="close()" style="cursor: pointer;">X</div>
           </div>
         </template>
-        <p class="my-4" style="text-align: right;">
-          لیست سوالات اینجا قرار خواهد گرفت
-        </p>
+        <div v-for="(question, index) in currentExamPreview" :key="index" style="text-align: right; margin-bottom: 24px; padding-bottom: 12px;border-bottom: 1px solid #ccc;">
+          <div style="margin-bottom: 10px;">
+            <span v-html="question.id + '-' +question.title"></span>
+          </div>
+          <div v-for="(option, index2) in question.options" :key="index2" style="margin-right:16px;margin-bottom:8px;" >
+            <span v-html="index2+1 +') ' + option.text"></span>
+            <b-badge v-if="question.selected == option.value" variant="success">گزینه صحیح</b-badge>
+          </div>
+        </div>
         <template #modal-footer="{ ok }">
           <div style="display: flex; justify-content: space-between;width: 100%;">
-            <b-button size="sm" variant="success" @click="ok()">
+            <b-button variant="success" @click="ok()">
               تایید سوالات
             </b-button>
-            <b-button size="sm" variant="outline-danger" @click="removeExamFileAndCloseModal()">
+            <!-- <b-button size="sm" variant="outline-danger" @click="removeFile()">
               حذف سوالات
-            </b-button>
+            </b-button> -->
           </div>
         </template>
       </b-modal>
@@ -106,8 +180,11 @@ export default {
   data() {
     return {
       currentExamPreview: [],
+      currentExamReport: [],
+      questionFile: [],
       // currentList: [],
-      zzz:[]
+      length: null,
+      questionFileUploader: document.getElementsByClassName('exams__questions-upload'),
     }
   },
   computed: {
@@ -119,26 +196,54 @@ export default {
       return this.examsList.length;
     },
     noResultMessage() {
-      return `نتیجه ای برای عبارت ${this.getAdminExamSearch} وجود ندارد`
+      return this.getAdminExamSearch.length ?  `نتیجه ای برای عبارت ${this.getAdminExamSearch} وجود ندارد ` : 'آزمونی وجود ندارد';
     },
     onlyExamsCheckedMessage() {
-      return `آزمون دارای سوالی ندارد`
+      return `آزمون دارای سوالی وجود ندارد`
     },
   },
   methods: {
-    openUploadDialog(examQuestionsFileId, index) {
-      let questionFileUploader = document.getElementById(examQuestionsFileId).click();
+    ...mapActions([
+      'uploadQuestionFile',
+      'deleteQuestionFile',
+      'updateExamList',
+      'totalReport',
+    ]),
+    async openReport(testID) {
+      console.log("test", testID);
+      let result = await this.totalReport(testID);
+      console.log("result", result);
+      this.currentExamReport = result.data.reports;
+      this.$refs['modal-total-report'].show();
     },
-    removeExamFile(examIndex) {
-      this.examsList[examIndex].examQuestionsFile = null;
+    async setFile(event, index, exam) {
+      let file = event.target.files[0];
+      let result = await this.uploadQuestionFile({testID: this.examsList[index].testID, testFile: file})
+      if (result) {
+        this.setCurrentExamPreview(result.questions, false);
+        this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions});
+      }
+    },
+    async removeFile(index, testId) {
+      let result = await this.deleteQuestionFile(testId);
+      if (result) {
+        this.updateExamList({index: index, isActive: false, nameFile: "", questions: []});
+      }
+    },
+    openUploadDialog(examQuestionsFileId, index) {
+      this.questionFileUploader[index].click();
     },
     removeExamFileAndCloseModal() {
-      this.currentExamPreview.examQuestionsFile = null;
+      this.currentExamPreview = [];
       this.$refs['modal-questions-preview'].hide();
     },
-    setCurrentExamPreview(clickedExam) {
+    setCurrentExamPreview(clickedExam, openModal, index) {
+      this.currentExamPreview = [];
       this.currentExamPreview = clickedExam;
-      this.$refs['modal-questions-preview'].show();
+      console.log("preview", this.currentExamPreview)
+      if (openModal) {
+        this.$refs['modal-questions-preview'].show();
+      }
     },
   },
   mounted() {
@@ -398,6 +503,60 @@ export default {
         background-color: #f5f4f4;
         color: #afabab;
         text-align: center;
+      }
+    }
+
+    &__preview{
+
+      &-correct {
+        // color: #BC11FD;
+        // font-weight: bold;
+        // border: 1px solid #BC11FD;
+        // padding: 8px;
+        // border-radius: 6px;
+      };
+    }
+
+    &__report {
+      width: 100%;
+      display: flex;
+
+      &-header {
+        flex-grow: 1;
+        text-align: right;
+        margin-bottom: 18px;
+        font-weight: bold;
+      }
+
+      &-row {
+        width: 10%;
+      }
+
+      &-name {
+        width: 30%;
+      }
+
+      &-national-code {
+        width: 25%;
+      }
+
+      &-student-id {
+        width: 30%;
+      }
+
+      &-score {
+        width: 5%;
+      }
+
+      &-content {
+        width: 100%;
+        display: flex;
+        margin-bottom: 10px;
+      }
+
+      &-cell {
+        flex-grow: 1;
+        text-align: right;
       }
     }
   }

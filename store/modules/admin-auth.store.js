@@ -65,19 +65,16 @@ export const getters = {
 
 export const mutations = {
   LOAD_ALL_ADMIN_DATA(state, data) {
-    let mobile = localStorage.getItem('adminMobile');
-    let loginToken = localStorage.getItem('adminLoginToken');
-    let verifyToken = localStorage.getItem('adminVerifyToken');
-    let role = localStorage.getItem('adminRole');
-    let name = localStorage.getItem('adminName');
+    let adminLogin = JSON.parse(localStorage.getItem('adminLogin'));
+    let adminVerify = JSON.parse(localStorage.getItem('adminVerify'));
     let userType = localStorage.getItem('userType');
-    state.admin.mobile = mobile;
-    state.admin.loginToken = loginToken;
-    state.admin.verifyToken = verifyToken;
-    state.admin.role = role;
-    state.admin.name = name;
+    state.admin.mobile = adminLogin.mobile;
+    state.admin.loginToken = adminLogin.loginToken;
+    state.admin.verifyToken = adminVerify.verifyToken;
+    state.admin.role = adminVerify.role;
+    state.admin.name = adminVerify.name;
     state.admin.userType = userType;
-    state.admin.isAdminLoggedIn = loginToken ? true : false;
+    state.admin.isAdminLoggedIn = adminLogin.loginToken ? true : false;
   },
   SET_ADMIN_LOGIN_DATA(state, data) {
     state.admin.mobile = data.mobile;
@@ -88,14 +85,6 @@ export const mutations = {
     state.admin.verifyToken = data.token;
     state.admin.name = data.name;
   },
-  // SET_ADMIN_LOGIN(state, data) {
-  //   state.admin.isAdminLoggedIn = true;
-  //   state.student.isStudentLoggedIn = false;
-  // },
-  // SET_ADMIN_LOGOUT(state, data) {
-  //   state.admin.isAdminLoggedIn = false;
-  //   state.student.isStudentLoggedIn = false;
-  // },
   SET_ADMIN_ACTIVE_SORT_TYPE(state, data) {
     state.admin.activeSortType = data;
   },
@@ -115,6 +104,11 @@ export const mutations = {
   SET_ADMIN_CURRENT_EXAMS(state, data) {
     state.admin.currentExams = data;
   },
+  UPDATE_ADMIN_EXAMS(state, data) {
+    state.admin.currentExams[data.index].isActive = data.isActive;
+    state.admin.currentExams[data.index].nameFile = data.nameFile;
+    state.admin.currentExams[data.index].questions = data.questions;
+  },
 }
 
 export const actions = {
@@ -132,17 +126,17 @@ export const actions = {
         mobile: data, 
         loginToken: fetchResult.data.token
       };
-      // commit("SET_ADMIN_LOGIN_DATA", result);
+      commit("SET_ADMIN_LOGIN_DATA", result);
       dispatch('setAdminLoginData', result);
       return fetchResult;
     } else if (fetchResult && (fetchResult.success === false)) {
-      console.log("error store");
+      console.log("error login1");
       this.$toast.error(
         "شماره موبایل وارد شده صحیح نمی باشد!"
       )  
       return false;
     } else {
-      console.log("error store");
+      console.log("error login2");
       this.$toast.error(
         "لطفا دوباره امتحان کنید!"
       )  
@@ -150,64 +144,78 @@ export const actions = {
     }
   },
   setAdminLoginData({ dispatch, commit }, payload) {
-    localStorage.setItem('adminMobile', (payload.mobile));
-    localStorage.setItem('adminLoginToken', (payload.loginToken));
+    let adminLogin = {
+      mobile: payload.mobile,
+      loginToken: payload.loginToken,
+    }
+   localStorage.setItem('adminLogin', JSON.stringify(adminLogin));
   },
-  // getAdminLoginToken({ dispatch, commit }, payload) {
-  //   let loginToken = (localStorage.getItem('adminLoginToken'));
-  //   return loginToken;
-  // },
   async verifyAdmin({ state, dispatch, commit }, data) {
     const requestBody = {
       codesms: data,
     };
-    // let loginToken = await dispatch('getAdminLoginToken');
-    
-    // const headers = {
-    //     'Authorization': "Bearer " + loginToken,
-    //     'Content-Type': 'application/x-www-form-urlencoded'
-    // };
     const url = '/auth/verify';
     
-    return await this.$axios.post(url, qs.stringify(requestBody)).then((res) => {
-      if (res.data && (res.data.success === true)) {
-        commit("SET_ADMIN_LOGIN_DATA", res.data.data);
-        // commit("SET_ADMIN_LOGIN", true);
-        dispatch('setAdminVerifyData', res.data.data);
+
+    let fetchResult = await execute('POST', url, requestBody);
+    console.log("SSSS:", fetchResult)
+    if (fetchResult && (fetchResult.success === true)) {
+        // commit("SET_ADMIN_LOGIN_DATA", fetchResult.data.data);
+        dispatch('setAdminVerifyData', fetchResult.data);
         dispatch('setUserType', 'admin');
-        return res.data;
-      } else if (res.data && (res.data.success === false)) {
-        this.$toast.error(
-          "کد تایید صحیح نمی باشد!"
-        )  
-        return false;
-      } else {
-        console.log("verify error store");
-        this.$toast.error(
-          "خطای کد تایید"
-        )  
-        return false;
-      }
-    }).catch((error) => {
-      console.log("RES error: ", error);
-    })
+        return fetchResult;
+    } else if (fetchResult && (fetchResult.success === false)) {
+      console.log("error verify1");
+      this.$toast.error(
+        "کد تایید صحیح نمی باشد!"
+      )  
+      return false;
+    } else {
+      console.log("error verify2");
+      this.$toast.error(
+        "خطای کد تایید"
+      )  
+      return false;
+    }
+
+    // return await this.$axios.post(url, qs.stringify(requestBody)).then((res) => {
+    //   console.log("SSSS:", res)
+    //   if (res.data && (res.data.success === true)) {
+    //     commit("SET_ADMIN_LOGIN_DATA", res.data.data);
+    //     dispatch('setAdminVerifyData', res.data.data);
+    //     dispatch('setUserType', 'admin');
+    //     return res.data;
+    //   } else if (res.data && (res.data.success === false)) {
+    //     this.$toast.error(
+    //       "کد تایید صحیح نمی باشد!"
+    //     )  
+    //     return false;
+    //   } else {
+    //     console.log("verify error store");
+    //     this.$toast.error(
+    //       "خطای کد تایید"
+    //     )  
+    //     return false;
+    //   }
+    // }).catch((error) => {
+    //   console.log("RES error: ", error);
+    // })
   },
   setAdminVerifyData(ctx, payload) {
-    localStorage.setItem('adminRole', (payload.role));
-    localStorage.setItem('adminVerifyToken', (payload.token));
-    localStorage.setItem('adminName', (payload.name));
+    let adminVerify = {
+      role: payload.role,
+      verifyToken: payload.token,
+      name: payload.name,
+    };
+    localStorage.setItem('adminVerify', JSON.stringify(adminVerify));
   },
   setUserType(ctx, payload) {
     localStorage.setItem('userType', payload);
   },
   logoutAdmin(ctx, payload) {
-    localStorage.removeItem('adminRole');
-    localStorage.removeItem('adminVerifyToken');
-    localStorage.removeItem('adminName');
+    localStorage.removeItem('adminLogin');
+    localStorage.removeItem('adminVerify');
     localStorage.removeItem('userType');
-    localStorage.removeItem('adminMobile');
-    localStorage.removeItem('adminLoginToken');
-    localStorage.removeItem('otpCode');
   },
   async setAdminActiveSortType({ dispatch, commit }, payload) {
     commit('SET_ADMIN_ACTIVE_SORT_TYPE', payload);
@@ -329,6 +337,69 @@ export const actions = {
       commit('SET_ADMIN_CURRENT_EXAMS',{});
       return false;
     }
+  },
+  async uploadQuestionFile({ dispatch, commit, state }, payload) {
+    const url = '/operator/test/uploadQuestion';
+    let requestBody = new FormData();
+    requestBody.append("testID", payload.testID);
+    requestBody.append("testFile", payload.testFile);
+    let config = {headers: { 'Content-Type': 'multipart/form-data' }}
+    return await this.$axios.post(url, requestBody, config).then((res) => {
+      console.log("SSSS:", res)
+      if (res.data && (res.data.success === true)) {
+        return res.data;
+      } else if (res.data && res.data.success === false && (res.data.code === 702))  {
+        console.log("verify error store");
+        this.$toast.error(
+          "خطا در فایل سوالات. لطفا فایل سوالات را اصلاح کنید"
+        )
+        return false;
+      } else {
+        console.log("verify error store");
+        this.$toast.error(
+          "آپلود فایل سوالات با خطا مواجه شد"
+        )  
+        return false;
+      }
+    }).catch((error) => {
+      console.log("RES error: ", error);
+    })
+  },
+  async deleteQuestionFile({ dispatch, commit, state }, payload) {
+    const url = '/operator/test/deleteTest';
+    let requestBody = new URLSearchParams();
+    requestBody.append("testID", payload);
+
+    let result = await execute('POST', url, requestBody);
+    if (result && (result.success === true)) {
+      console.log("result", result);
+      return true;
+    } else {
+      this.$toast.error(
+        "حذف فایل سوالات باخطا مواجه شد"
+      )
+      return false;
+    }
+  },
+  async totalReport({ dispatch, commit, state }, payload) {
+    console.log("examReport", payload)
+    const url = '/operator/test/totalReport';
+    let requestBody = {testID: payload};
+    let result = await execute('POST', url, requestBody);
+    if (result && (result.success === true)) {
+      return result;
+    } else {
+      this.$toast.error(
+        "مشکل در نمایش نتایج آزمون"
+      )
+    }
+  },
+  updateExamList({ dispatch, commit, state }, payload) {
+    console.log("xxx", payload);
+
+// TO DO: fix upload issue after two time
+
+    commit('UPDATE_ADMIN_EXAMS', payload)
   },
 }
 

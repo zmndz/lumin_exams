@@ -7,7 +7,7 @@
         </a>
       </nav>
       <div class="login__form">
-        <b-form class="w-100">
+        <b-form class="w-100" @submit="login">
           <b-form-group
             id="input-group-1"
             label-for="input-1"
@@ -17,6 +17,7 @@
               class="login__national-code"
               v-model="form.nationalCode"
               required
+              autofocus
               placeholder="کد ملی"
             ></b-form-input>
           </b-form-group>
@@ -39,12 +40,12 @@
 
               <b-link class="login__forgot-password" href="#">فراموشی رمز عبور</b-link>
           </b-form-group> -->
-          <div class="login__submit" @click="login">ورود</div>
+          <b-button type="submit" class="login__submit">ورود</b-button>
         </b-form>
       </div>
       <div class="login__footer__wrapper">
         کاربر جدید هستید؟
-          <a class="login__register" href="#">ثبت نام کنید</a>
+          <a class="login__register" href="/register">ثبت نام کنید</a>
       </div>
     </div>
     <div class="login__image">
@@ -70,7 +71,8 @@ export default {
     ...mapActions([
       'loginStudent',
     ]),
-    async login() {
+    async login(e) {
+      e.preventDefault();
       let requestParams = {
         nationalCode: this.form.nationalCode,
         password: this.form.password,
@@ -107,11 +109,11 @@ export default {
   .login {
 
     &__background {
-      // background-color: #f9f9f9;
       width: 100vw;
-      height: 100vh;
+      min-height: 100vh;
       display: flex;
       justify-content: space-between;
+      position: relative;
     }
 
     &__navbar {
@@ -182,10 +184,11 @@ export default {
       border: none;
       border-radius: 50px;
       height: 46px;
+      width: 100%;
       margin-top: 50px;
       box-shadow: 4px 10px 10px -4px rgba(253, 188, 17, 0.32);
       text-align: center;
-      line-height: 44px;
+      line-height: 36px;
       color: #fff;
       cursor: pointer;
       transition: all 0.2s ease-in-out;
@@ -250,7 +253,10 @@ export default {
         background-size: cover;
         background-position: center;
         width: 50%;
-        height: 100%;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
         box-shadow: 0px 0px 18px 6px #ccc;
       }
     }

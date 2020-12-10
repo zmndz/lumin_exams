@@ -10,44 +10,43 @@
             <div class="exams__details">
               <div class="exams__title-wrapper">
                 <div class="exams__title-label">
-                  آزمون: 
+                  آزمون:
                 </div>
                 <div class="exams__title-value">
-                  {{exam.lessonTitle}} 
+                  {{exam.lessonTitle}}
                 </div>
               </div>
               <div class="exams__code-wrapper">
                 <div class="exams__code-label">
-                  کد آزمون: 
+                  کد آزمون:
                 </div>
                 <div class="exams__code-value">
-                  {{exam.testCode}} 
+                  {{exam.testCode}}
                 </div>
               </div>
               <div class="exams__date-wrapper">
                 <div class="exams__date-label">
-                  تاریخ آزمون: 
+                  تاریخ آزمون:
                 </div>
                 <div class="exams__date-value">
-                  {{exam.date}} 
+                  {{exam.date}}
                 </div>
               </div>
               <div class="exams__time-wrapper">
                 <div class="exams__time-label">
-                  ساعت آزمون: 
+                  ساعت آزمون:
                 </div>
                 <div class="exams__time-value">
-                  {{exam.startTime}} تا {{exam.endTime}} 
+                  {{exam.startTime}} تا {{exam.endTime}}
                 </div>
               </div>
             </div>
             <div :key="index" class="exams__questions-upload-wrapper">
-  <!-- To do: fix fileupload v-model -->
-              <b-form-file 
-                :id="'js-examQuestionsFile-' + index" 
-                class="exams__questions-upload" 
-                plain accept=".doc,.docx,.xml,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
-                v-model="questionFile[index]" 
+              <b-form-file
+                :id="'js-examQuestionsFile-' + index"
+                class="exams__questions-upload"
+                plain accept=".doc,.docx,.xml,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                v-model="questionFile[index]"
                 @change="setFile($event, index, exam)"
               >
               </b-form-file>
@@ -132,7 +131,7 @@
           </div>
         </template>
       </b-modal>
-      
+
       <b-modal v-if="currentExamPreview" ref="modal-questions-preview" id="modal-questions-preview" centered>
         <template #modal-header="{ close }">
           <div style="display: flex; justify-content: space-between;width: 100%;">
@@ -176,7 +175,7 @@
 import { mapActions, mapGetters } from 'vuex'
 
 export default {
-  props:['examsList'],  
+  props:['examsList'],
   data() {
     return {
       currentExamPreview: [],
@@ -255,7 +254,7 @@ export default {
 <style lang="scss" scoped>
 
   .exams {
-    
+
     &__message {
       margin-bottom: 16px;
       width: 100%;
@@ -349,7 +348,7 @@ export default {
         color: #8a8a8a;
       }
     }
-    
+
     &__code {
 
       &-wrapper {
@@ -386,7 +385,7 @@ export default {
       }
 
     }
-    
+
     &__time {
 
       &-wrapper {
@@ -581,7 +580,7 @@ export default {
       }
     }
   }
-  
+
   // large devices (laptops, 768px and up)
   @media (min-width: 991.98px) {
     .exams {
@@ -615,7 +614,7 @@ export default {
       }
 
       &__single {
-        
+
         &-wrapper:nth-child(2n+0) {
           margin-left: 24px;
         }

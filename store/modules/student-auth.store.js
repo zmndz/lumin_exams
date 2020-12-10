@@ -154,13 +154,13 @@ export const actions = {
       console.log("error student store");
       this.$toast.error(
         "کد ملی یا رمز عبور وارد شده صحیح نمی باشد"
-      )  
+      )
       return false;
     } else {
       console.log("error store");
       this.$toast.error(
         "لطفا دوباره امتحان کنید!"
-      )  
+      )
       return false;
     }
   },
@@ -246,7 +246,6 @@ export const actions = {
     let result = await execute('POST', url, requestBody);
     if (result && (result.success === true)) {
       result.data.noneAnsweredQuestions = result.data.questions.length;
-      console.log("SDS", result.data)
       dispatch('setCurrentExam', result.data)
       return true;
     } else if (result && (result.success === false) && result.code == 720) {
@@ -260,17 +259,29 @@ export const actions = {
     }
   },
   async submitExam({ dispatch, commit, state }, payload) {
-
     const url = '/student/testSubmit';
-    let requestBody = payload;
-    let result = await execute('POST', url, requestBody);
-    if (result && (result.success === true)) {
-      return true;
-    } else {
-      this.$toast.error(
-        "مشکل در ثبت پایان آزمون"
-      )
+    let requestBody = new FormData();
+    requestBody.append("testID", payload.testID);
+    requestBody.append("answerStudent", payload.answerStudent);
+    let length = payload.answerFiles.length;
+    console.log("length", length)
+    for (let index = 0; index < length; index++) {
+      requestBody.append("answerFiles", payload.answerFiles[index]);
     }
+    let config = {headers: { 'Content-Type': 'multipart/form-data' }}
+    return await this.$axios.post(url, requestBody, config).then((res) => {
+      if (res.data && (res.data.success === true)) {
+        return true;
+      } else {
+        this.$toast.error(
+          "ثیت آزمون با مشک مواجه شد"
+        )
+        return false;
+      }
+    }).catch((error) => {
+      console.log("RES error: ", error);
+    })
+
   },
   async examReport({ dispatch, commit, state }, payload) {
     console.log("examReport", payload)
@@ -282,7 +293,7 @@ export const actions = {
       return result;
     } else {
       this.$toast.error(
-        "مشکل در ثبت آزمون"
+        "مشکل در نمایش نتیجه آزمون"
       )
     }
   },

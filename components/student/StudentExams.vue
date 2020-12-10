@@ -9,40 +9,45 @@
         <div class="courses__details">
           <div class="courses__title-wrapper">
             <div class="courses__title-label">
-              درس: 
+              درس:
             </div>
             <div class="courses__title-value">
-              {{exam.lessonTitle}} 
+              {{exam.lessonTitle}}
             </div>
           </div>
           <div class="courses__lesson-code-wrapper">
             <div class="courses__lesson-code-label">
-              کد درس: 
+              کد درس:
             </div>
             <div class="courses__lesson-code-value">
-              {{exam.lessonCode}} 
+              {{exam.lessonCode}}
             </div>
           </div>
           <div class="courses__date-wrapper">
             <div class="courses__date-label">
-              تاریخ آزمون: 
+              تاریخ آزمون:
             </div>
             <div class="courses__date-value">
-              {{exam.date | moment("jYYYY/jM/jD")}} 
+              {{exam.date | moment("jYYYY/jM/jD")}}
             </div>
           </div>
           <div class="courses__time-wrapper">
             <div class="courses__time-label">
-              ساعت آزمون: 
+              ساعت آزمون:
             </div>
             <div class="courses__time-value">
               {{exam.startTime}} تا {{exam.endTime}}
             </div>
           </div>
         </div>
-        <div v-if="exam.isFinish && dateCompare(exam.date)" class="courses__result-wrapper">
+        <div v-if="exam.isFinish && exam.isResult" class="courses__result-wrapper">
           <div class="courses__result courses__result--active" @click="openReport(exam)">
             نتیجه آزمون
+          </div>
+        </div>
+        <div v-if="exam.isFinish && !exam.isResult" class="courses__result-wrapper">
+          <div class="courses__result">
+            درحال تصحیح
           </div>
         </div>
         <div v-if="!exam.isFinish && dateCompare(exam.date)" class="courses__start-wrapper">
@@ -52,12 +57,12 @@
           <div v-else class="courses__start">
             شروع آزمون
           </div>
-        </div>  
+        </div>
         <div v-if="!exam.isFinish && !dateCompare(exam.date)" class="courses__absent-wrapper">
           <div class="courses__absent">
             غایب
           </div>
-        </div>  
+        </div>
       </div>
     </div>
 
@@ -85,7 +90,7 @@ import { mapActions, mapGetters } from 'vuex'
 import moment from 'moment'
 
 export default {
-  props:['examsList'],  
+  props:['examsList'],
   data() {
     return {
       currentDate: moment().format(),
@@ -114,7 +119,7 @@ export default {
     async openReport(exam) {
       let result = await this.examReport(exam.testID);
       if(result && result.success === true) {
-        this.currentReport = {...result.data, name: exam.lessonTitle}; 
+        this.currentReport = {...result.data, name: exam.lessonTitle};
         this.$refs['modal-report'].show();
       }
     },
@@ -130,7 +135,7 @@ export default {
       }
     },
     timeCompare(startTime, endTime) {
-      let time = moment(this.currentDate).format('hh:mm:ss');
+      let time = moment(this.currentDate).format('HH:MM:SS');
       return (time >= startTime) && (time <= endTime) ? true : false;
     },
     dateCompare(date) {
@@ -283,7 +288,7 @@ export default {
       }
 
     }
-    
+
     &__time {
 
       &-wrapper {
@@ -320,7 +325,7 @@ export default {
       border-radius: 0.25rem;
       width: 100%;
       transition: all 0.15s ease-in-out;
-      
+
       &-wrapper {
         display: flex;
       }
@@ -334,11 +339,11 @@ export default {
         font-size: 1rem;
         box-shadow: 0px 8px 13px -6px #ccc;
         line-height: 30px;
-        
+
         &:hover {
           background-color: darken(#28a745, 3%);
         }
-        
+
         &:active {
           background-color: darken(#28a745, 7%) !important;
         }
@@ -346,12 +351,10 @@ export default {
     }
 
     &__result {
-      opacity: 0.58;
-      font-size: 10px;
-      background-color: #fdbc11;
-      color: #fff;
-      display: inline-block;
+      color: #fdbc11;
+      font-weight: bold;
       text-align: center;
+      display: inline-block;
       vertical-align: middle;
       -webkit-user-select: none;
       -moz-user-select: none;
@@ -362,25 +365,24 @@ export default {
       border-radius: 0.25rem;
       width: 100%;
       transition: all 0.15s ease-in-out;
-      
+
       &-wrapper {
         display: flex;
       }
 
       &--active {
-        opacity: 1;
+        text-align: center;
         background-color: #fdbc11;
         color: #fff;
         font-weight: normal;
         cursor: pointer;
-        font-size: 1rem;
         box-shadow: 0px 8px 13px -6px #ccc;
         line-height: 30px;
-        
+
         &:hover {
           background-color: darken(#fdbc11, 3%);
         }
-        
+
         &:active {
           background-color: darken(#fdbc11, 7%) !important;
         }
@@ -389,7 +391,6 @@ export default {
 
     &__absent {
       opacity: 0.58;
-      // font-size: 10px;
       font-size: 1rem;
       background-color: #ccc;
       color: #000;
@@ -405,7 +406,7 @@ export default {
       border-radius: 0.25rem;
       width: 100%;
       transition: all 0.15s ease-in-out;
-      
+
       &-wrapper {
         display: flex;
       }
@@ -425,7 +426,7 @@ export default {
       }
     }
   }
-  
+
   // large devices (laptops, 768px and up)
   @media (min-width: 991.98px) {
     .courses {

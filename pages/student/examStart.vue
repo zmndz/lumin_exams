@@ -6,7 +6,7 @@
           <div class="col-12 col-md-6 col-lg-4">
             <div class="exam__name">
               <div class="exam__name-label">
-                آزمون درس: 
+                آزمون درس:
               </div>
               <div class="exam__name-value">
                 {{currentExam.lessonTitle}}
@@ -16,7 +16,7 @@
           <div class="col-12 col-md-6 col-lg-4">
             <div class="exam__timer">
               <div class="exam__timer-label">
-                زمان تا پایان آزمون: 
+                زمان تا پایان آزمون:
               </div>
               <div v-if="hours && minutes && seconds" class="exam__timer-value">
                 <!-- {{examTimeCounter}} -->
@@ -27,7 +27,7 @@
           <div class="col-12 col-md-6 col-lg-4">
             <div class="exam__questions-left">
               <div class="exam__questions-left-label">
-                سوالات بدون پاسخ: 
+                سوالات بدون پاسخ:
               </div>
               <div class="exam__questions-left-value">
                 <!-- {{currentExam.noneAnsweredQuestions}} -->
@@ -38,7 +38,7 @@
           <!-- <div class="col-12 col-md-6 col-lg-2">
             <div class="exam__marked">
               <div class="exam__marked-label">
-                سوالات نشان شده: 
+                سوالات نشان شده:
               </div>
               <div class="exam__marked-value">
                 0
@@ -52,7 +52,7 @@
           <div class="exam__title" v-html="(index + 1) + '- ' + question.title">
             <!-- {{index+1}}- {{question.title}} -->
           </div>
-          <div class="exam__options-wrapper">
+          <div v-if="question.type === 'test'" class="exam__options-wrapper">
             <b-form-group :name="'form-group-' + index" label="">
               <b-form-radio-group
                 v-model="question.selected"
@@ -68,7 +68,53 @@
               </b-form-radio-group>
             </b-form-group>
           </div>
+          <div v-if="question.type === 'descriptive'" class="exam__options-wrapper">
+            <b-row class="mt-2">
+              <b-col xs="12" md="8">
+                <b-form-textarea
+                  id="textarea-default"
+                  v-model="question.selected"
+                  rows="3"
+                  max-rows="8"
+                  @input="saveAnswers"
+                  placeholder=""
+                ></b-form-textarea>
+              </b-col>
+            </b-row>
+          </div>
         </div>
+
+        <b-row v-if="isThereDescriptive" class="mt-2">
+          <b-col xs="12" md="4">
+            <div class="exam__questions-upload-wrapper">
+              <b-form-file
+                id="js-examQuestionsFile"
+                class="exam__questions-upload"
+                plain
+                accept="image/jpeg, image/png, image/gif"
+                multiple
+                @change="setFile($event)"
+              >
+              </b-form-file>
+
+              <div v-if="!questionFile.length" class="exam__questions-upload-trigger" @click="openUploadDialog">
+                <span class="exam__questions-upload-icon">+</span> آپلود فایل های ضمیمه
+              </div>
+              <div v-else>
+                <div v-for="(file, index) in questionFile" :key="index" class="exam__questions-upload-file">
+                  <div class="exam__questions-upload-file-name">
+                    {{ file ? file.name : '' }}
+                  </div>
+                  <div class="exam__questions-upload-file-remove" @click="removeFile(index)">
+                    x
+                  </div>
+                </div>
+              </div>
+            </div>
+          </b-col>
+        </b-row>
+
+
       </div>
       <div class="exam__submit">
         <b-button block variant="success" @click="openConfirm">پایان آزمون</b-button>
@@ -107,12 +153,15 @@ export default {
       minutes: null,
       seconds: null,
       noneAnswered: null,
+      isThereDescriptive: false,
+      questionFile: [],
     }
   },
   computed: {
     ...mapGetters([
       'getCurrentExam',
     ]),
+
   },
   methods: {
     ...mapActions([
@@ -121,6 +170,17 @@ export default {
       'setIsExamStarted',
       'submitExam',
     ]),
+    async setFile(event) {
+      let file = Object.values(event.target.files);
+      this.questionFile = file;
+    },
+    async removeFile(index) {
+      this.questionFile.splice(index, 1);
+    },
+    openUploadDialog() {
+    let uploader = document.getElementById('js-examQuestionsFile');
+    uploader.click();
+    },
     openConfirm() {
       this.$refs['modal-confirm'].show();
     },
@@ -129,7 +189,7 @@ export default {
     },
     submitQuestions() {
       let submited = this.currentExam.questions.map((item, index) => {
-        return {questionID: item.id, answer: item.selected}
+        return {questionID: item.id, type: item.type, answer: item.selected}
       })
       let readyData = {
         testID: this.currentExam.testID,
@@ -137,12 +197,13 @@ export default {
           testId: this.currentExam.testID,
           answers:[
             ...submited
-          ],          
-        })
+          ],
+        }),
+        answerFiles: this.questionFile,
       }
-      console.log(readyData)
       let result = this.submitExam(readyData);
       if(result) {
+        this.setIsExamStarted({data: false});
         this.$router.push('/student');
         this.$toast.success(
           "آزمون با موفقیت به پایان رسید"
@@ -159,8 +220,6 @@ export default {
       this.currentExam.questions.map((item, index) => {
         if (item.selected) {
           count++;
-        } else {
-
         }
       })
       this.noneAnswered = length - count;
@@ -205,6 +264,9 @@ export default {
   },
   mounted() {
     this.currentExam = this.getCurrentExam;
+    if(this.currentExam) {
+      this.isThereDescriptive = true;
+    }
     this.noneAnswered = this.currentExam.noneAnsweredQuestions
     this.initiateTimer();
     this.setIsExamStarted({data: true});
@@ -285,9 +347,109 @@ export default {
       width: 100%;
       text-align: right;
     }
-    
+
     &__question {
       margin-bottom: 32px;
+    }
+
+    &__questions-upload {
+      display: none;
+
+      &-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        flex-direction: column;
+        font-size: 12px;
+      }
+
+      &-trigger {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px dashed #fdbc11;
+        padding: 6px;
+        border-radius: 4px;
+        height: 44px;
+        line-height: 34px;
+        cursor: pointer;
+        width: 100%;
+        color: #fdbc11;
+        font-weight: bold;
+        transition: all 0.2s;
+        margin-top: 8px;
+
+        &:hover {
+          background-color: #fdbc11;
+          color: #fff;
+        }
+
+        &:active {
+          border: 1px solid #fdbc11 !important;
+          background-color: darken(#fdbc11, 5%);
+          color: #fff;
+        }
+      }
+
+      &-icon {
+        font-size: 24px;
+        height: 18px;
+        width: 18px;
+        line-height: 24px;
+        margin-left: 6px;
+      }
+
+      &-file {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        text-align: right;
+        cursor: pointer;
+        margin: 8px 0;
+        border-radius: 4px;
+        transition: all 0.2s;
+        background-color: #f5f5f5;
+
+        &:hover {
+          background-color: darken(#f5f5f5, 3%);
+        }
+
+        &-name {
+          padding: 6px;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          color: #1890ff;
+
+          &:focus {
+            outline: none;
+          }
+        }
+
+        &-remove {
+          font-size: 16px;
+          height: 32px;
+          width: 32px;
+          line-height: 36px;
+          text-align: center;
+          border-top-left-radius: 4px;
+          border-bottom-left-radius: 4px;
+          transition: all 0.2s;
+
+          &:hover {
+            background-color: #dcdcdc;
+          }
+        }
+      }
+
+      &-expired {
+        padding: 11px 12px;
+        font-size: 14px;
+        border-radius: 5px;
+        margin: 4px;
+        background-color: #f5f4f4;
+        color: #afabab;
+        text-align: center;
+      }
     }
 
     &__submit {
@@ -315,7 +477,7 @@ export default {
       }
     }
   }
-  
+
   // large devices (laptops, 768px and up)
   @media (min-width: 991.98px) {
     .exam {
@@ -326,7 +488,7 @@ export default {
   // extra large devices (desktops, 768px and up)
   @media (min-width: 1199.98px) {
     .exam {
-      
+
     }
   }
 </style>

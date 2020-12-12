@@ -1,5 +1,6 @@
 <template>
   <div v-if="isExamListEmpty" class="">
+
     <div v-if="(!getAdminOnlyExamsChecked)" class="exams__list">
       <div class="exams__single-wrapper" v-for="(exam, index) in examsList" :key="index">
         <div class="exams__single">
@@ -45,25 +46,20 @@
               <b-form-file
                 :id="'js-examQuestionsFile-' + index"
                 class="exams__questions-upload"
-                plain accept=".doc,.docx,.xml,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                plain accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,application/pdf"
                 v-model="questionFile[index]"
                 @change="setFile($event, index, exam)"
               >
               </b-form-file>
-              <!-- <div v-if="exam.isExpire" class="exams__questions-upload-expired">
-                مشاهده نتایج
-              </div> -->
               <b-button v-if="exam.isExpire" variant="outline-dark" @click="openReport(exam.testID)">
                 مشاهده نتایج
               </b-button>
 
               <div v-else>
                 <div v-if="!exam.isActive" class="exams__questions-upload-trigger" @click="openUploadDialog('js-examQuestionsFile-' + index, index)">
-                <!-- <div class="exams__questions-upload-trigger" @click="openUploadDialog('js-examQuestionsFile-' + index, index)"> -->
                   <span class="exams__questions-upload-icon">+</span> آپلود سوالات
                 </div>
                 <div v-else class="exams__questions-upload-file">
-                <!-- <div class="exams__questions-upload-file"> -->
                   <div class="exams__questions-upload-file-name" @click="setCurrentExamPreview(exam.questions, true, index)">
                     مشاهده سوالات: {{ exam ? exam.nameFile : '' }}
                   </div>
@@ -141,7 +137,10 @@
             <div @click="close()" style="cursor: pointer;">X</div>
           </div>
         </template>
-        <div v-for="(question, index) in currentExamPreview" :key="index" style="text-align: right; margin-bottom: 24px; padding-bottom: 12px;border-bottom: 1px solid #ccc;">
+        <div v-if="isPDF">
+	        <object class="zzz" type="application/pdf" data="https://csnaapp.ir/uploads/3.pdf"></object>
+        </div>
+        <div v-else v-for="(question, index) in currentExamPreview" :key="index" style="text-align: right; margin-bottom: 24px; padding-bottom: 12px;border-bottom: 1px solid #ccc;">
           <div style="margin-bottom: 10px;">
             <span v-html="question.id + '-' +question.title"></span>
           </div>
@@ -172,16 +171,23 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
+import { mapActions, mapGetters } from 'vuex';
 
 export default {
   props:['examsList'],
   data() {
     return {
+      config: {
+        toolbar: {
+          toolbarViewerLeft: {
+            next: true,
+          },
+        },
+      },
       currentExamPreview: [],
       currentExamReport: [],
       questionFile: [],
-      // currentList: [],
+      isPDF: false,
       length: null,
       questionFileUploader: document.getElementsByClassName('exams__questions-upload'),
     }
@@ -217,6 +223,10 @@ export default {
     },
     async setFile(event, index, exam) {
       let file = event.target.files[0];
+      if (file.type === 'application/pdf') {
+      console.log("file: ", file.type)
+        this.isPDF = true;
+      }
       let result = await this.uploadQuestionFile({testID: this.examsList[index].testID, testFile: file})
       if (result) {
         this.setCurrentExamPreview(result.questions, false);

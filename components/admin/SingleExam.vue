@@ -56,7 +56,8 @@
               </b-button>
 
               <div v-else>
-                <div v-if="!exam.isActive" class="exams__questions-upload-trigger" @click="openUploadDialog('js-examQuestionsFile-' + index, index)">
+                <!-- <div v-if="!exam.isActive" class="exams__questions-upload-trigger" @click="openUploadDialog('js-examQuestionsFile-' + index, index)"> -->
+                <div v-if="false" @click="openUploadDialog('js-examQuestionsFile-' + index, index)">
                   <span class="exams__questions-upload-icon">+</span> آپلود سوالات
                 </div>
                 <div v-else class="exams__questions-upload-file">
@@ -128,7 +129,7 @@
         </template>
       </b-modal>
 
-      <b-modal v-if="currentExamPreview" ref="modal-questions-preview" id="modal-questions-preview" centered>
+      <b-modal v-if="currentExamPreview" size="xl" ref="modal-questions-preview" id="modal-questions-preview" centered>
         <template #modal-header="{ close }">
           <div style="display: flex; justify-content: space-between;width: 100%;">
             <div>
@@ -137,8 +138,21 @@
             <div @click="close()" style="cursor: pointer;">X</div>
           </div>
         </template>
-        <div v-if="isPDF">
-	        <object class="zzz" type="application/pdf" data="https://csnaapp.ir/uploads/3.pdf"></object>
+        <div v-if="true">
+          pdf
+
+          <canvas id="the-canvas"></canvas>
+
+	        <!-- <object class="zzz" style="width: 100%;height: 700px;" type="application/pdf" data="https://csnaapp.ir/uploads/3.pdf">
+            <iframe
+              src="https://csnaapp.ir/uploads/3.pdf"
+              width="100%"
+              height="100%"
+              style="border: none;">
+              <p>Your browser does not support PDFs.
+                <a href="https://csnaapp.ir/uploads/3.pdf">Download the PDF</a>.</p>
+            </iframe>
+          </object> -->
         </div>
         <div v-else v-for="(question, index) in currentExamPreview" :key="index" style="text-align: right; margin-bottom: 24px; padding-bottom: 12px;border-bottom: 1px solid #ccc;">
           <div style="margin-bottom: 10px;">
@@ -175,15 +189,10 @@ import { mapActions, mapGetters } from 'vuex';
 
 export default {
   props:['examsList'],
+  components: {
+  },
   data() {
     return {
-      config: {
-        toolbar: {
-          toolbarViewerLeft: {
-            next: true,
-          },
-        },
-      },
       currentExamPreview: [],
       currentExamReport: [],
       questionFile: [],
@@ -214,6 +223,58 @@ export default {
       'updateExamList',
       'totalReport',
     ]),
+    pdf() {
+      // If absolute URL from the remote server is provided, configure the CORS
+      // header on that server.
+      var url = 'https://csnaapp.ir/uploads/3.pdf';
+
+      // Loaded via <script> tag, create shortcut to access PDF.js exports.
+      var pdfjsLib = window['pdfjs-dist/build/pdf'];
+      // The workerSrc property shall be specified.
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
+      console.log("pdfjsLib", pdfjsLib)
+
+      // Asynchronous download of PDF
+      var loadingTask = pdfjsLib.getDocument(url);
+      loadingTask.promise.then(function(pdf) {
+        console.log('PDF loaded');
+
+        // Fetch the first page
+        var pageNumber = 1;
+        pdf.getPage(pageNumber).then(function(page) {
+          console.log('Page loaded');
+
+          var scale = 1;
+          var viewport = page.getViewport({
+            scale: scale
+          });
+
+          // Prepare canvas using PDF page dimensions
+          var canvas = document.getElementById('the-canvas');
+          console.log("DW:", canvas)
+          var context = canvas.getContext('2d');
+          console.log("viewport.height:", viewport.height)
+          console.log("viewport.width:", viewport.width)
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          // Render PDF page into canvas context
+          var renderContext = {
+            canvasContext: context,
+            viewport: viewport
+          };
+          console.log("renderContext:", renderContext)
+          var renderTask = page.render(renderContext);
+          renderTask.promise.then(function() {
+            console.log('Page rendered');
+          });
+        });
+      }, function(reason) {
+        // PDF loading error
+        console.error(reason);
+      });
+
+    },
     async openReport(testID) {
       console.log("test", testID);
       let result = await this.totalReport(testID);
@@ -249,19 +310,19 @@ export default {
     setCurrentExamPreview(clickedExam, openModal, index) {
       this.currentExamPreview = [];
       this.currentExamPreview = clickedExam;
-      console.log("preview", this.currentExamPreview)
       if (openModal) {
+        this.pdf()
         this.$refs['modal-questions-preview'].show();
       }
     },
   },
-  mounted() {
-
+  async mounted() {
   }
 }
 </script>
 
 <style lang="scss" scoped>
+
 
   .exams {
 

@@ -86,6 +86,9 @@ export default {
 
   },
   async mounted() {
+    let pdf = await document.createElement('script')
+    await pdf.setAttribute('src', '//mozilla.github.io/pdf.js/build/pdf.js')
+    await document.head.appendChild(pdf);
   },
   async created() {
     this.loadAllAdminData();

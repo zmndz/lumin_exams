@@ -1,8 +1,8 @@
 @font-face {
 	font-family: 'vazir';
-	src: url('~assets/fonts/Vazir-light.eot'); 
-	src: url('~assets/fonts/Vazir-light.eot'); 
-	src: url('~assets/fonts/Vazir-light.eot?#iefix') format('embedded-opentype'), 
+	src: url('~assets/fonts/Vazir-light.eot');
+	src: url('~assets/fonts/Vazir-light.eot');
+	src: url('~assets/fonts/Vazir-light.eot?#iefix') format('embedded-opentype'),
 				url('~assets/fonts/Vazir-light.woff2') format('woff2'),
 				url('~assets/fonts/Vazir-light.woff') format('woff'),
 				url('~assets/fonts/Vazir-light.ttf')  format('truetype');
@@ -12,15 +12,16 @@
 
 @font-face {
 	font-family: 'vazir';
-	src: url('~assets/fonts/Vazir-Bold.eot'); 
-	src: url('~assets/fonts/Vazir-Bold.eot'); 
-	src: url('~assets/fonts/Vazir-Bold.eot?#iefix') format('embedded-opentype'), 
+	src: url('~assets/fonts/Vazir-Bold.eot');
+	src: url('~assets/fonts/Vazir-Bold.eot');
+	src: url('~assets/fonts/Vazir-Bold.eot?#iefix') format('embedded-opentype'),
 				url('~assets/fonts/Vazir-Bold.woff2') format('woff2'),
 				url('~assets/fonts/Vazir-Bold.woff') format('woff'),
 				url('~assets/fonts/Vazir-Bold.ttf')  format('truetype');
 	font-weight: bold;
 	font-style: normal;
 }
+// @import '~vue-pdf-reader/vue-pdf-reader.css';
 
 body {
   font-family: 'vazir';
@@ -89,4 +90,10 @@ input[type=number] {
 	left: unset;
 	right: -1.5rem;
 	cursor: pointer;
+}
+
+#the-canvas {
+  border: 1px solid black;
+  direction: ltr;
+  width: 100%;
 }

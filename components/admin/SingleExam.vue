@@ -131,28 +131,72 @@
 
       <b-modal v-if="currentExamPreview" size="xl" ref="modal-questions-preview" id="modal-questions-preview" centered>
         <template #modal-header="{ close }">
-          <div style="display: flex; justify-content: space-between;width: 100%;">
+          <div class="exams__modal-preview">
             <div>
               سوالات آزمون <strong>{{currentExamPreview.lessonTitle}}</strong>
             </div>
-            <div @click="close()" style="cursor: pointer;">X</div>
+            <div @click="close()" class="exams__modal-close">X</div>
           </div>
         </template>
-        <div v-if="true">
-          pdf
-
-          <canvas id="the-canvas"></canvas>
-
-	        <!-- <object class="zzz" style="width: 100%;height: 700px;" type="application/pdf" data="https://csnaapp.ir/uploads/3.pdf">
-            <iframe
-              src="https://csnaapp.ir/uploads/3.pdf"
-              width="100%"
-              height="100%"
-              style="border: none;">
-              <p>Your browser does not support PDFs.
-                <a href="https://csnaapp.ir/uploads/3.pdf">Download the PDF</a>.</p>
-            </iframe>
-          </object> -->
+        <div v-if="true" class="exams__modal-pdf">
+          <div class="row">
+            <div class="col-12 col-md-4 border-left">
+              <div class="row">
+                <div class="col-12">
+                  <b-form-group
+                    id="fieldset-1"
+                    label="تعداد سوالات تشریحی"
+                    label-for="input-1"
+                  >
+                    <b-form-input required id="input-2" v-model="pdfQuestions.descriptiveCount"></b-form-input>
+                  </b-form-group>
+                </div>
+                <div class="col-12">
+                  <b-form-group
+                    id="fieldset-1"
+                    label="جمع نمره سوالات تشریحی"
+                    label-for="input-1"
+                  >
+                    <b-form-input required id="input-3" v-model="pdfQuestions.descriptiveBarom"></b-form-input>
+                  </b-form-group>
+                </div>
+                <div class="col-12">
+                  <b-form-group
+                    id="fieldset-1"
+                    label="تعداد سوالات تستی"
+                    label-for="input-1"
+                  >
+                    <b-form-input required id="input-1" class="exams__modal-input" v-model="pdfQuestions.testCount" @input="setTestQuestionCount">
+                    </b-form-input>
+                    <div v-for="(item, index) in pdfQuestions.testQuestions" :key="'radio-group-'+index">
+                      <b-form-group :name="'form-group-' + index" label="">
+                        <div style="display: flex; width: 100%;">
+                          <span style="margin-left: 16px;">
+                            {{index+1}}-
+                          </span>
+                          <b-form-radio-group
+                            v-model="item.selected"
+                            :name="'radio-group-' + index"
+                            stacked
+                            class="exams__modal-option-wrapper"
+                          >
+                            <template v-for="(option, index2) in item.options">
+                              <b-form-radio :key="option.value + index2" :value="option.value">
+                                <span v-html="option.text" class="exams__modal-option"></span>
+                              </b-form-radio>
+                            </template>
+                          </b-form-radio-group>
+                        </div>
+                      </b-form-group>
+                    </div>
+                  </b-form-group>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-md-8">
+              <div id="pdf-viewer"></div>
+            </div>
+          </div>
         </div>
         <div v-else v-for="(question, index) in currentExamPreview" :key="index" style="text-align: right; margin-bottom: 24px; padding-bottom: 12px;border-bottom: 1px solid #ccc;">
           <div style="margin-bottom: 10px;">
@@ -193,6 +237,12 @@ export default {
   },
   data() {
     return {
+      pdfQuestions: {
+        testCount: null,
+        testQuestions: [],
+        descriptiveCount: null,
+        descriptiveBarom: null,
+      },
       currentExamPreview: [],
       currentExamReport: [],
       questionFile: [],
@@ -223,10 +273,34 @@ export default {
       'updateExamList',
       'totalReport',
     ]),
+    setTestQuestionCount() {
+      let sampleOption = {
+        id: null,
+        title: '',
+        type: 'descriptive',
+        selected: null,
+        options: [
+          {text: 'الف', value: '1'},
+          {text: 'ب', value: '2'},
+          {text: 'ج', value: '3'},
+          {text: 'د', value: '4'},
+        ],
+      };
+      let options = [];
+
+      for(let i =0 ; i<this.pdfQuestions.testCount ; i++) {
+        options.push({...sampleOption, id: i})
+      }
+      console.log("options: ", options)
+      this.pdfQuestions.testQuestions = options;
+    },
     pdf() {
       // If absolute URL from the remote server is provided, configure the CORS
       // header on that server.
       var url = 'https://csnaapp.ir/uploads/3.pdf';
+
+      var thePdf = null;
+      var scale = 1;
 
       // Loaded via <script> tag, create shortcut to access PDF.js exports.
       var pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -235,44 +309,47 @@ export default {
       console.log("pdfjsLib", pdfjsLib)
 
       // Asynchronous download of PDF
-      var loadingTask = pdfjsLib.getDocument(url);
-      loadingTask.promise.then(function(pdf) {
-        console.log('PDF loaded');
+      var loadingTask = pdfjsLib.getDocument(url).promise.then(function(pdf) {
+          thePdf = pdf;
+          let viewer = document.getElementById('pdf-viewer');
 
-        // Fetch the first page
-        var pageNumber = 1;
-        pdf.getPage(pageNumber).then(function(page) {
-          console.log('Page loaded');
+          for(let page = 1; page <= pdf.numPages; page++) {
+            let canvas = document.createElement("canvas");
+            canvas.className = 'the-canvas';
+            viewer.appendChild(canvas);
+            renderPage(page, canvas);
+          }
+      });
 
+      function renderPage(pageNumber, canvas) {
+        thePdf.getPage(pageNumber).then(function(page) {
           var scale = 1;
           var viewport = page.getViewport({
             scale: scale
           });
 
+
           // Prepare canvas using PDF page dimensions
-          var canvas = document.getElementById('the-canvas');
-          console.log("DW:", canvas)
+          // var canvas = document.getElementById('the-canvas');
+          // console.log("DW:", canvas)
           var context = canvas.getContext('2d');
-          console.log("viewport.height:", viewport.height)
-          console.log("viewport.width:", viewport.width)
           canvas.height = viewport.height;
           canvas.width = viewport.width;
+          page.render({canvasContext: canvas.getContext('2d'), viewport: viewport});
 
           // Render PDF page into canvas context
-          var renderContext = {
-            canvasContext: context,
-            viewport: viewport
-          };
-          console.log("renderContext:", renderContext)
-          var renderTask = page.render(renderContext);
-          renderTask.promise.then(function() {
-            console.log('Page rendered');
-          });
+          // var renderContext = {
+          //   canvasContext: context,
+          //   viewport: viewport
+          // };
+          // console.log("renderContext:", renderContext)
+          // var renderTask = page.render(renderContext);
+          // renderTask.promise.then(function() {
+          //   console.log('Page rendered');
+          // });
         });
-      }, function(reason) {
-        // PDF loading error
-        console.error(reason);
-      });
+      }
+
 
     },
     async openReport(testID) {
@@ -311,7 +388,7 @@ export default {
       this.currentExamPreview = [];
       this.currentExamPreview = clickedExam;
       if (openModal) {
-        this.pdf()
+        this.pdf();
         this.$refs['modal-questions-preview'].show();
       }
     },
@@ -322,6 +399,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+
 
 
   .exams {
@@ -627,6 +705,38 @@ export default {
       &-cell {
         flex-grow: 1;
         text-align: right;
+      }
+    }
+
+    &__modal {
+
+      &-preview {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+      }
+
+      &-close {
+        cursor: pointer;
+      }
+
+      &-pdf {
+        text-align: right;
+      }
+
+      &-input {
+        margin-bottom: 32px;
+      }
+
+      &-option {
+        display:flex;
+        align-items:center;
+
+        &-wrapper {
+          display: flex;
+          justify-content: space-between;
+          width: 100%;
+        }
       }
     }
   }

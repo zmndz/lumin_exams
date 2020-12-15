@@ -123,7 +123,7 @@ export const actions = {
     let fetchResult = await execute('POST', url, requestBody);
     if (fetchResult && (fetchResult.success === true)) {
       let result = {
-        mobile: data, 
+        mobile: data,
         loginToken: fetchResult.data.token
       };
       commit("SET_ADMIN_LOGIN_DATA", result);
@@ -133,13 +133,13 @@ export const actions = {
       console.log("error login1");
       this.$toast.error(
         "شماره موبایل وارد شده صحیح نمی باشد!"
-      )  
+      )
       return false;
     } else {
       console.log("error login2");
       this.$toast.error(
         "لطفا دوباره امتحان کنید!"
-      )  
+      )
       return false;
     }
   },
@@ -155,7 +155,7 @@ export const actions = {
       codesms: data,
     };
     const url = '/auth/verify';
-    
+
 
     let fetchResult = await execute('POST', url, requestBody);
     console.log("SSSS:", fetchResult)
@@ -168,13 +168,13 @@ export const actions = {
       console.log("error verify1");
       this.$toast.error(
         "کد تایید صحیح نمی باشد!"
-      )  
+      )
       return false;
     } else {
       console.log("error verify2");
       this.$toast.error(
         "خطای کد تایید"
-      )  
+      )
       return false;
     }
 
@@ -188,13 +188,13 @@ export const actions = {
     //   } else if (res.data && (res.data.success === false)) {
     //     this.$toast.error(
     //       "کد تایید صحیح نمی باشد!"
-    //     )  
+    //     )
     //     return false;
     //   } else {
     //     console.log("verify error store");
     //     this.$toast.error(
     //       "خطای کد تایید"
-    //     )  
+    //     )
     //     return false;
     //   }
     // }).catch((error) => {
@@ -224,8 +224,6 @@ export const actions = {
   setAdminOnlyExamChecked({ dispatch, commit }, payload) {
     commit('SET_ADMIN_ONLY_EXAM_CHECKED', payload);
   },
-
-
   setAdminExamSearch({ dispatch, commit }, payload) {
     commit('SET_ADMIN_EXAM_SEARCH', payload);
   },
@@ -289,7 +287,7 @@ export const actions = {
     let availableExams = false;
     let expiredExams = true;
     let searchQuery = state.admin.examSearch;
-   
+
     if (payload == 'AVAILABLE_EXAMS') {
       availableExams = true;
       expiredExams = false;
@@ -317,7 +315,7 @@ export const actions = {
       let current = [];
       if (result.data.newTest && result.data.newTest.length) {
         active = result.data.newTest;
-      } 
+      }
       if (result.data.oldTest && result.data.oldTest.length) {
         expired = result.data.oldTest;
       }
@@ -358,13 +356,71 @@ export const actions = {
         console.log("verify error store");
         this.$toast.error(
           "آپلود فایل سوالات با خطا مواجه شد"
-        )  
+        )
         return false;
       }
     }).catch((error) => {
       console.log("RES error: ", error);
     })
   },
+  async uploadPdfFile({ dispatch, commit, state }, payload) {
+    const url = '/operator/test/uploadGetPdf';
+    let requestBody = new FormData();
+    requestBody.append("testID", payload.testID);
+    requestBody.append("testFile", payload.testFile);
+    let config = {headers: { 'Content-Type': 'multipart/form-data' }}
+    return await this.$axios.post(url, requestBody, config).then((res) => {
+      console.log("PDF:", res)
+      if (res.data && (res.data.success === true)) {
+        return res.data;
+      } else if (res.data && res.data.success === false && (res.data.code === 702))  {
+        console.log("verify error store");
+        this.$toast.error(
+          "خطا در فایل سوالات. لطفا فایل سوالات را اصلاح کنید"
+        )
+        return false;
+      } else {
+        console.log("verify error store");
+        this.$toast.error(
+          "آپلود فایل سوالات با خطا مواجه شد"
+        )
+        return false;
+      }
+    }).catch((error) => {
+      console.log("RES error: ", error);
+    })
+  },
+  async submitPdfFile({ dispatch, commit, state }, payload) {
+    const url = '/operator/test/uploadSavePdf';
+    let requestBody = new FormData();
+    requestBody.append("testID", payload.testID);
+    requestBody.append("url", payload.url);
+    requestBody.append("showTest", payload.showTest);
+    requestBody.append("nameFile", payload.nameFile);
+    requestBody.append("countDescriptive", payload.countDescriptive);
+    let config = {headers: { 'Content-Type': 'multipart/form-data' }}
+      return await this.$axios.post(url, requestBody, config).then((res) => {
+      console.log("ressss:", res)
+      if (res.data && (res.data.success === true)) {
+        return res.data;
+      } else if (res.data && res.data.success === false && (res.data.code === 702))  {
+        console.log("verify error store");
+        this.$toast.error(
+          "خطا در فایل سوالات. لطفا فایل سوالات را اصلاح کنید"
+        )
+        return false;
+      } else {
+        console.log("verify error store");
+        this.$toast.error(
+          "آپلود فایل سوالات با خطا مواجه شد"
+        )
+        return false;
+      }
+    }).catch((error) => {
+      console.log("RES error: ", error);
+    })
+  },
+
   async deleteQuestionFile({ dispatch, commit, state }, payload) {
     const url = '/operator/test/deleteTest';
     let requestBody = new URLSearchParams();

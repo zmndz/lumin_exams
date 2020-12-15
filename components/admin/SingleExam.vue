@@ -56,12 +56,17 @@
               </b-button>
 
               <div v-else>
-                <!-- <div v-if="!exam.isActive" class="exams__questions-upload-trigger" @click="openUploadDialog('js-examQuestionsFile-' + index, index)"> -->
-                <div v-if="false" @click="openUploadDialog('js-examQuestionsFile-' + index, index)">
+                <div v-if="!exam.isActive" class="exams__questions-upload-trigger" @click="openUploadDialog('js-examQuestionsFile-' + index, index)">
+                <!-- <div v-if="false" @click="openUploadDialog('js-examQuestionsFile-' + index, index)"> -->
                   <span class="exams__questions-upload-icon">+</span> آپلود سوالات
                 </div>
                 <div v-else class="exams__questions-upload-file">
-                  <div class="exams__questions-upload-file-name" @click="setCurrentExamPreview(exam.questions, true, index)">
+                  <div
+                    class="exams__questions-upload-file-name"
+                    @click="isPDF ?
+                      setCurrentExamPreviewPdf({url: exam.pdfUrl, nameFile: exam.nameFile, testID: exam.testID}, true, index)
+                      :setCurrentExamPreview(exam.questions, true, exam.lessonTitle, index)"
+                  >
                     مشاهده سوالات: {{ exam ? exam.nameFile : '' }}
                   </div>
                   <div class="exams__questions-upload-file-remove" @click="removeFile(index, exam.testID)">
@@ -129,16 +134,16 @@
         </template>
       </b-modal>
 
-      <b-modal v-if="currentExamPreview" size="xl" ref="modal-questions-preview" id="modal-questions-preview" centered>
+      <b-modal v-if="currentExamPreviewPdf" size="xl" ref="modal-questions-preview-pdf" id="modal-questions-preview-pdf" no-close-on-backdrop centered>
         <template #modal-header="{ close }">
           <div class="exams__modal-preview">
             <div>
-              سوالات آزمون <strong>{{currentExamPreview.lessonTitle}}</strong>
+              فایل: <strong>{{currentExamPreviewPdf.lessonTitle}}</strong>
             </div>
             <div @click="close()" class="exams__modal-close">X</div>
           </div>
         </template>
-        <div v-if="true" class="exams__modal-pdf">
+        <div class="exams__modal-pdf">
           <div class="row">
             <div class="col-12 col-md-4 border-left">
               <div class="row">
@@ -146,31 +151,55 @@
                   <b-form-group
                     id="fieldset-1"
                     label="تعداد سوالات تشریحی"
-                    label-for="input-1"
+                    label-for="input-descriptive-count"
                   >
-                    <b-form-input required id="input-2" v-model="pdfQuestions.descriptiveCount"></b-form-input>
+                    <b-form-input
+                      required
+                      id="input-descriptive-count"
+                      type="number"
+                      :state="pdfFormValidation(pdfQuestions.descriptiveCount)"
+                      aria-describedby="input-descriptive-count-feedback"
+                      v-model="pdfQuestions.descriptiveCount"
+                    >
+                    </b-form-input>
                   </b-form-group>
                 </div>
                 <div class="col-12">
                   <b-form-group
                     id="fieldset-1"
                     label="جمع نمره سوالات تشریحی"
-                    label-for="input-1"
+                    label-for="input-descriptive-barom"
                   >
-                    <b-form-input required id="input-3" v-model="pdfQuestions.descriptiveBarom"></b-form-input>
+                    <b-form-input
+                      required
+                      id="input-descriptive-barom"
+                      type="number"
+                      :state="pdfFormValidation(pdfQuestions.descriptiveBarom)"
+                      aria-describedby="input-descriptive-barom-feedback"
+                      v-model="pdfQuestions.descriptiveBarom"
+                    >
+                    </b-form-input>
                   </b-form-group>
                 </div>
                 <div class="col-12">
                   <b-form-group
                     id="fieldset-1"
                     label="تعداد سوالات تستی"
-                    label-for="input-1"
+                    label-for="input-test-count"
                   >
-                    <b-form-input required id="input-1" class="exams__modal-input" v-model="pdfQuestions.testCount" @input="setTestQuestionCount">
+                    <b-form-input
+                      required
+                      id="input-test-count"
+                      class="exams__modal-input"
+                      :state="pdfFormValidation(pdfQuestions.testCount)"
+                      aria-describedby="input-test-count-feedback"
+                      v-model="pdfQuestions.testCount"
+                      @input="setTestQuestionCount"
+                    >
                     </b-form-input>
                     <div v-for="(item, index) in pdfQuestions.testQuestions" :key="'radio-group-'+index">
                       <b-form-group :name="'form-group-' + index" label="">
-                        <div style="display: flex; width: 100%;">
+                        <div :id="'exams__modal-option-group-' + index" class="exams__modal-option-group" :class="{'exams__modal-option-valid' : item.selected}">
                           <span style="margin-left: 16px;">
                             {{index+1}}-
                           </span>
@@ -198,7 +227,28 @@
             </div>
           </div>
         </div>
-        <div v-else v-for="(question, index) in currentExamPreview" :key="index" style="text-align: right; margin-bottom: 24px; padding-bottom: 12px;border-bottom: 1px solid #ccc;">
+        <template #modal-footer="{ close }">
+          <div style="display: flex; justify-content: flex-start;width: 100%;">
+            <b-button class="ml-4" size="lg" variant="success" @click="pdfFormSubmit()">
+              تایید سوالات
+            </b-button>
+            <b-button size="sm" variant="outline-danger" @click="close()">
+              انصراف
+            </b-button>
+          </div>
+        </template>
+      </b-modal>
+
+      <b-modal v-if="currentExamPreview" size="xl" ref="modal-questions-preview" id="modal-questions-preview" centered>
+        <template #modal-header="{ close }">
+          <div class="exams__modal-preview">
+            <div>
+              سوالات آزمون <strong>{{currentExamPreview.lessonTitle}}</strong>
+            </div>
+            <div @click="close()" class="exams__modal-close">X</div>
+          </div>
+        </template>
+        <div v-for="(question, index) in currentExamPreview.questions" :key="index" style="text-align: right; margin-bottom: 24px; padding-bottom: 12px;border-bottom: 1px solid #ccc;">
           <div style="margin-bottom: 10px;">
             <span v-html="question.id + '-' +question.title"></span>
           </div>
@@ -208,16 +258,17 @@
           </div>
         </div>
         <template #modal-footer="{ ok }">
-          <div style="display: flex; justify-content: space-between;width: 100%;">
-            <b-button variant="success" @click="ok()">
+          <div style="display: flex; justify-content: flex-start;width: 100%;">
+            <b-button class="ml-4" size="lg" variant="success" @click="ok()">
               تایید سوالات
             </b-button>
-            <!-- <b-button size="sm" variant="outline-danger" @click="removeFile()">
-              حذف سوالات
+            <!-- <b-button size="sm" variant="outline-danger" @click="close()">
+              انصراف
             </b-button> -->
           </div>
         </template>
       </b-modal>
+
     </div>
     <div v-else v-html="onlyExamsCheckedMessage" class="exams__message">
     </div>
@@ -243,6 +294,7 @@ export default {
         descriptiveCount: null,
         descriptiveBarom: null,
       },
+      currentExamPreviewPdf: [],
       currentExamPreview: [],
       currentExamReport: [],
       questionFile: [],
@@ -270,14 +322,75 @@ export default {
     ...mapActions([
       'uploadQuestionFile',
       'deleteQuestionFile',
+      'uploadPdfFile',
+      'submitPdfFile',
       'updateExamList',
       'totalReport',
     ]),
+    pdfFormSubmit(input) {
+      let temp1 = this.pdfFormValidation(this.pdfQuestions.descriptiveCount);
+      let temp2 = this.pdfFormValidation(this.pdfQuestions.descriptiveBarom);
+      let temp3 = this.pdfFormValidation(this.pdfQuestions.testCount);
+      let temp4 = true;
+
+      this.pdfQuestions.testQuestions.map((item, index) => {
+        document.getElementById('exams__modal-option-group-' + index).classList.add('exams__modal-option-invalid')
+        temp4 = item.selected ? true : false;
+      });
+
+      let temp5 = temp1 && temp2 && temp3;
+
+
+      if( temp4 && temp5) {
+        let sampleOption = {
+          id: null,
+          title: '',
+          type: 'descriptive',
+          selected: null,
+          options: null,
+        };
+        let options = [];
+        for(let i=0 ; i<this.pdfQuestions.descriptiveCount ; i++) {
+          options.push({...sampleOption, id: this.pdfQuestions.testQuestions.length + i})
+        }
+        let questionsKeys= [
+          ...this.pdfQuestions.testQuestions,
+          ...options,
+        ];
+
+        console.log("questionsKeys", questionsKeys)
+        let params = {
+          testID: this.currentExamPreviewPdf.testID,
+          url: this.currentExamPreviewPdf.url,
+          showTest: JSON.stringify(questionsKeys),
+          nameFile: this.currentExamPreviewPdf.lessonTitle,
+          countDescriptive: this.pdfQuestions.descriptiveBarom,
+        }
+        let result = this.submitPdfFile(params)
+        return false;
+      }
+    },
+    wordFormSubmit(input) {
+      // let temp1 = this.pdfFormValidation(this.pdfQuestions.descriptiveCount);
+      // let temp2 = this.pdfFormValidation(this.pdfQuestions.descriptiveBarom);
+      // let temp3 = this.pdfFormValidation(this.pdfQuestions.testCount);
+      // let temp4 = temp1 && temp2 && temp3
+      // if((temp1 === null) && (temp2 === null) && (temp3 === null)) {
+      //   return false;
+      // }
+    },
+    pdfFormValidation(input) {
+      if(input && input.length>0) {
+        return true;
+      } else {
+        return false;
+      }
+    },
     setTestQuestionCount() {
       let sampleOption = {
         id: null,
         title: '',
-        type: 'descriptive',
+        type: 'test',
         selected: null,
         options: [
           {text: 'الف', value: '1'},
@@ -294,11 +407,11 @@ export default {
       console.log("options: ", options)
       this.pdfQuestions.testQuestions = options;
     },
-    pdf() {
+    pdf(pdfURL) {
       // If absolute URL from the remote server is provided, configure the CORS
       // header on that server.
-      var url = 'https://csnaapp.ir/uploads/3.pdf';
-
+      var url = 'https://192.168.1.11:7001/uploads/test/pdfs/07d118d3109593c47e46ce7663d778f8478fc681d913c39007e2019edcc9f96a.pdf';
+      console.log("QQ", pdfURL)
       var thePdf = null;
       var scale = 1;
 
@@ -306,7 +419,6 @@ export default {
       var pdfjsLib = window['pdfjs-dist/build/pdf'];
       // The workerSrc property shall be specified.
       pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
-      console.log("pdfjsLib", pdfjsLib)
 
       // Asynchronous download of PDF
       var loadingTask = pdfjsLib.getDocument(url).promise.then(function(pdf) {
@@ -328,48 +440,43 @@ export default {
             scale: scale
           });
 
-
-          // Prepare canvas using PDF page dimensions
-          // var canvas = document.getElementById('the-canvas');
-          // console.log("DW:", canvas)
           var context = canvas.getContext('2d');
           canvas.height = viewport.height;
           canvas.width = viewport.width;
           page.render({canvasContext: canvas.getContext('2d'), viewport: viewport});
-
-          // Render PDF page into canvas context
-          // var renderContext = {
-          //   canvasContext: context,
-          //   viewport: viewport
-          // };
-          // console.log("renderContext:", renderContext)
-          // var renderTask = page.render(renderContext);
-          // renderTask.promise.then(function() {
-          //   console.log('Page rendered');
-          // });
         });
       }
 
 
     },
     async openReport(testID) {
-      console.log("test", testID);
       let result = await this.totalReport(testID);
-      console.log("result", result);
       this.currentExamReport = result.data.reports;
       this.$refs['modal-total-report'].show();
     },
     async setFile(event, index, exam) {
       let file = event.target.files[0];
       if (file.type === 'application/pdf') {
-      console.log("file: ", file.type)
         this.isPDF = true;
+        let result = await this.uploadPdfFile({testID: this.examsList[index].testID, testFile: file})
+        if (result) {
+          console.log("result", result)
+          this.setCurrentExamPreviewPdf({url: result.url, fileName: result.nameFile, testID: this.examsList[index].testID}, true);
+          // this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions});
+        }
+      } else {
+        let result = await this.uploadQuestionFile({testID: this.examsList[index].testID, testFile: file})
+        if (result) {
+          this.setCurrentExamPreview(result.questions, false);
+          this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions});
+        }
       }
-      let result = await this.uploadQuestionFile({testID: this.examsList[index].testID, testFile: file})
-      if (result) {
-        this.setCurrentExamPreview(result.questions, false);
-        this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions});
-      }
+
+      // let result = await this.uploadQuestionFile({testID: this.examsList[index].testID, testFile: file})
+      // if (result) {
+      //   this.setCurrentExamPreview(result.questions, false);
+      //   this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions});
+      // }
     },
     async removeFile(index, testId) {
       let result = await this.deleteQuestionFile(testId);
@@ -384,11 +491,29 @@ export default {
       this.currentExamPreview = [];
       this.$refs['modal-questions-preview'].hide();
     },
-    setCurrentExamPreview(clickedExam, openModal, index) {
-      this.currentExamPreview = [];
-      this.currentExamPreview = clickedExam;
+    setCurrentExamPreviewPdf(pdfData, openModal, index) {
+      this.currentExamPreviewPdf = [];
+      this.currentExamPreviewPdf = {
+        lessonTitle: pdfData.fileName,
+        url: pdfData.url,
+        testID: pdfData.testID,
+      };
+      console.log("this.currentExamPreviewPdf", this.currentExamPreviewPdf)
       if (openModal) {
-        this.pdf();
+        this.pdf(pdfData.url);
+        this.$refs['modal-questions-preview-pdf'].show();
+      }
+    },
+    setCurrentExamPreview(clickedExam, openModal, lessonTitle, index) {
+      this.currentExamPreview = [];
+      this.currentExamPreview = {
+        lessonTitle: lessonTitle,
+        questions: clickedExam,
+      };
+      // this.currentExamPreview.push({lessonTitle{});
+      console.log("SSS", this.currentExamPreview);
+      if (openModal) {
+        // this.pdf();
         this.$refs['modal-questions-preview'].show();
       }
     },
@@ -399,9 +524,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
-
-
   .exams {
 
     &__message {
@@ -731,6 +853,29 @@ export default {
       &-option {
         display:flex;
         align-items:center;
+
+        &-group {
+          display: flex;
+          width: 100%;
+          height: calc(1.5em + 0.75rem + 2px);
+          padding: 0.375rem 0.75rem;
+          font-weight: 400;
+          line-height: 1.5;
+          background-color: #fff;
+          background-clip: padding-box;
+          border: 1px solid #ced4da;
+          border-radius: 0.25rem;
+
+        }
+
+        &-invalid {
+          border: 1px solid #ff9292 !important;
+          // color: red;
+        }
+
+        &-valid {
+          border: 1px solid green !important;
+        }
 
         &-wrapper {
           display: flex;

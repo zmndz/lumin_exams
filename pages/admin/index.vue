@@ -73,7 +73,6 @@ export default {
           this.setAdminExamSearch(this.examSearch);
           this.fetchRequest();
         } else if (query.length == 0) {
-          console.log("Z")
           this.setAdminExamSearch("");
           this.fetchRequest();
         }
@@ -120,7 +119,7 @@ export default {
       &:hover {
         background-color: darken(#BC11FD, 5%);
       }
-      
+
       &:active {
         background-color: darken(#BC11FD, 12%) !important;
       }
@@ -162,7 +161,7 @@ export default {
   // Medium devices (tablets, 768px and up)
   @media (min-width: 767.98px) {
   }
-  
+
   // large devices (laptops, 768px and up)
   @media (min-width: 991.98px) {
 

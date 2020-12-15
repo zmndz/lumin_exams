@@ -373,16 +373,10 @@ export const actions = {
       console.log("PDF:", res)
       if (res.data && (res.data.success === true)) {
         return res.data;
-      } else if (res.data && res.data.success === false && (res.data.code === 702))  {
-        console.log("verify error store");
-        this.$toast.error(
-          "خطا در فایل سوالات. لطفا فایل سوالات را اصلاح کنید"
-        )
-        return false;
       } else {
         console.log("verify error store");
         this.$toast.error(
-          "آپلود فایل سوالات با خطا مواجه شد"
+          "آپلود فایل پی دی اف سوالات با مشکل مواجه شد"
         )
         return false;
       }
@@ -398,27 +392,22 @@ export const actions = {
     requestBody.append("showTest", payload.showTest);
     requestBody.append("nameFile", payload.nameFile);
     requestBody.append("countDescriptive", payload.countDescriptive);
-    let config = {headers: { 'Content-Type': 'multipart/form-data' }}
-      return await this.$axios.post(url, requestBody, config).then((res) => {
-      console.log("ressss:", res)
-      if (res.data && (res.data.success === true)) {
-        return res.data;
-      } else if (res.data && res.data.success === false && (res.data.code === 702))  {
-        console.log("verify error store");
-        this.$toast.error(
-          "خطا در فایل سوالات. لطفا فایل سوالات را اصلاح کنید"
-        )
-        return false;
-      } else {
-        console.log("verify error store");
-        this.$toast.error(
-          "آپلود فایل سوالات با خطا مواجه شد"
-        )
-        return false;
-      }
-    }).catch((error) => {
-      console.log("RES error: ", error);
-    })
+    // let config = {headers: { 'Content-Type': 'multipart/form-data' }}
+    let result = await execute('POST', url, requestBody);
+    // return await this.$axios.post(url, requestBody, config).then((res) => {
+    console.log("ressss:", result)
+    if (result.data && (result.data.success === true)) {
+      return result.data;
+    } else {
+      console.log("verify error store");
+      this.$toast.error(
+        "ذخیره کردن فایل پی دی اف سوالات با مشکل مواجه شد"
+      )
+      return false;
+    }
+    // }).catch((error) => {
+    //   console.log("RES error: ", error);
+    // })
   },
 
   async deleteQuestionFile({ dispatch, commit, state }, payload) {

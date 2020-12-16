@@ -56,6 +56,7 @@
               </b-button>
 
               <div v-else>
+                  {{index}}
                 <div v-if="!exam.isActive" class="exams__questions-upload-trigger" @click="openUploadDialog('js-examQuestionsFile-' + index, index)">
                 <!-- <div v-if="false" @click="openUploadDialog('js-examQuestionsFile-' + index, index)"> -->
                   <span class="exams__questions-upload-icon">+</span> آپلود سوالات
@@ -63,8 +64,8 @@
                 <div v-else class="exams__questions-upload-file">
                   <div
                     class="exams__questions-upload-file-name"
-                    @click="isPDF ?
-                      setCurrentExamPreviewPdf({url: exam.pdfUrl, nameFile: exam.nameFile, testID: exam.testID}, true, index)
+                    @click="exam.isPdf ?
+                      setCurrentExamPreviewPdf({url: exam.pdfUrl, nameFile: exam.nameFile, testID: exam.testID, descriptiveBarom: exam.descriptiveBarom}, true)
                       :setCurrentExamPreview(exam.questions, true, exam.lessonTitle, index)"
                   >
                     مشاهده سوالات: {{ exam ? exam.nameFile : '' }}
@@ -154,6 +155,7 @@
                     label-for="input-descriptive-count"
                   >
                     <b-form-input
+                      :disabled="false"
                       required
                       id="input-descriptive-count"
                       type="number"
@@ -248,13 +250,16 @@
             <div @click="close()" class="exams__modal-close">X</div>
           </div>
         </template>
-        <div v-for="(question, index) in currentExamPreview.questions" :key="index" style="text-align: right; margin-bottom: 24px; padding-bottom: 12px;border-bottom: 1px solid #ccc;">
-          <div style="margin-bottom: 10px;">
+        <div v-for="(question, index) in currentExamPreview.questions" :key="index" class="exams__modal-questions">
+          <div class="exams__modal-questions-title">
             <span v-html="question.id + '-' +question.title"></span>
           </div>
-          <div v-for="(option, index2) in question.options" :key="index2" style="margin-right:16px;margin-bottom:8px;" >
-            <span v-html="index2+1 +') ' + option.text"></span>
-            <b-badge v-if="question.selected == option.value" variant="success">گزینه صحیح</b-badge>
+          <div v-if="question.type === 'test'">
+            <!-- {{question.type}} -->
+            <div v-for="(option, index2) in question.options" :key="index2" style="margin-right:16px;margin-bottom:8px;" >
+              <span v-html="index2+1 +') ' + option.text"></span>
+              <b-badge v-if="question.selected == option.value" variant="success">گزینه صحیح</b-badge>
+            </div>
           </div>
         </div>
         <template #modal-footer="{ ok }">
@@ -309,6 +314,7 @@ export default {
       'getAdminExamSearch',
     ]),
     isExamListEmpty() {
+      console.log("z", this.examsList)
       return this.examsList.length;
     },
     noResultMessage() {
@@ -327,20 +333,16 @@ export default {
       'updateExamList',
       'totalReport',
     ]),
-    pdfFormSubmit(input) {
+    async pdfFormSubmit(input) {
       let temp1 = this.pdfFormValidation(this.pdfQuestions.descriptiveCount);
       let temp2 = this.pdfFormValidation(this.pdfQuestions.descriptiveBarom);
       let temp3 = this.pdfFormValidation(this.pdfQuestions.testCount);
       let temp4 = true;
-
       this.pdfQuestions.testQuestions.map((item, index) => {
         document.getElementById('exams__modal-option-group-' + index).classList.add('exams__modal-option-invalid')
         temp4 = item.selected ? true : false;
       });
-
       let temp5 = temp1 && temp2 && temp3;
-
-
       if( temp4 && temp5) {
         let sampleOption = {
           id: null,
@@ -357,8 +359,7 @@ export default {
           ...this.pdfQuestions.testQuestions,
           ...options,
         ];
-
-        console.log("questionsKeys", questionsKeys)
+        console.log("WQQQ", this.currentExamPreviewPdf)
         let params = {
           testID: this.currentExamPreviewPdf.testID,
           url: this.currentExamPreviewPdf.url,
@@ -366,18 +367,23 @@ export default {
           nameFile: this.currentExamPreviewPdf.lessonTitle,
           countDescriptive: this.pdfQuestions.descriptiveBarom,
         }
-        let result = this.submitPdfFile(params)
-        return false;
+        let result = await this.submitPdfFile(params)
+
+        if (result && result.success == true) {
+          this.$refs['modal-questions-preview-pdf'].hide();
+          this.$toast.success(
+            "فایل پی دی اف سوالات با موفقیت آپلود شد"
+          )
+          return true;
+        }
+      } else {
+        this.$toast.error(
+          "لطفا موارد قرمز رنگ را وارد کنید"
+        )
       }
     },
     wordFormSubmit(input) {
-      // let temp1 = this.pdfFormValidation(this.pdfQuestions.descriptiveCount);
-      // let temp2 = this.pdfFormValidation(this.pdfQuestions.descriptiveBarom);
-      // let temp3 = this.pdfFormValidation(this.pdfQuestions.testCount);
-      // let temp4 = temp1 && temp2 && temp3
-      // if((temp1 === null) && (temp2 === null) && (temp3 === null)) {
-      //   return false;
-      // }
+
     },
     pdfFormValidation(input) {
       if(input && input.length>0) {
@@ -400,18 +406,15 @@ export default {
         ],
       };
       let options = [];
-
       for(let i =0 ; i<this.pdfQuestions.testCount ; i++) {
         options.push({...sampleOption, id: i})
       }
-      console.log("options: ", options)
       this.pdfQuestions.testQuestions = options;
     },
     pdf(pdfURL) {
       // If absolute URL from the remote server is provided, configure the CORS
       // header on that server.
       var url = 'https://192.168.1.11:7001/uploads/test/pdfs/07d118d3109593c47e46ce7663d778f8478fc681d913c39007e2019edcc9f96a.pdf';
-      console.log("QQ", pdfURL)
       var thePdf = null;
       var scale = 1;
 
@@ -446,8 +449,6 @@ export default {
           page.render({canvasContext: canvas.getContext('2d'), viewport: viewport});
         });
       }
-
-
     },
     async openReport(testID) {
       let result = await this.totalReport(testID);
@@ -460,23 +461,19 @@ export default {
         this.isPDF = true;
         let result = await this.uploadPdfFile({testID: this.examsList[index].testID, testFile: file})
         if (result) {
-          console.log("result", result)
-          this.setCurrentExamPreviewPdf({url: result.url, fileName: result.nameFile, testID: this.examsList[index].testID}, true);
-          // this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions});
+          this.setCurrentExamPreviewPdf({url: result.url, nameFile: result.nameFile, testID: this.examsList[index].testID}, true);
+          this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions});
         }
       } else {
         let result = await this.uploadQuestionFile({testID: this.examsList[index].testID, testFile: file})
         if (result) {
           this.setCurrentExamPreview(result.questions, false);
           this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions});
+          this.$toast.success(
+            "فایل سوالات با موفقیت آپلود شد"
+          )
         }
       }
-
-      // let result = await this.uploadQuestionFile({testID: this.examsList[index].testID, testFile: file})
-      // if (result) {
-      //   this.setCurrentExamPreview(result.questions, false);
-      //   this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions});
-      // }
     },
     async removeFile(index, testId) {
       let result = await this.deleteQuestionFile(testId);
@@ -491,14 +488,14 @@ export default {
       this.currentExamPreview = [];
       this.$refs['modal-questions-preview'].hide();
     },
-    setCurrentExamPreviewPdf(pdfData, openModal, index) {
+    setCurrentExamPreviewPdf(pdfData, openModal) {
       this.currentExamPreviewPdf = [];
       this.currentExamPreviewPdf = {
-        lessonTitle: pdfData.fileName,
+        lessonTitle: pdfData.nameFile,
         url: pdfData.url,
         testID: pdfData.testID,
       };
-      console.log("this.currentExamPreviewPdf", this.currentExamPreviewPdf)
+
       if (openModal) {
         this.pdf(pdfData.url);
         this.$refs['modal-questions-preview-pdf'].show();
@@ -510,10 +507,7 @@ export default {
         lessonTitle: lessonTitle,
         questions: clickedExam,
       };
-      // this.currentExamPreview.push({lessonTitle{});
-      console.log("SSS", this.currentExamPreview);
       if (openModal) {
-        // this.pdf();
         this.$refs['modal-questions-preview'].show();
       }
     },
@@ -881,6 +875,21 @@ export default {
           display: flex;
           justify-content: space-between;
           width: 100%;
+        }
+      }
+
+      &-questions {
+        text-align: right;
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+
+        &:not(:last-child) {
+          border-bottom: 1px solid #ccc;
+        }
+
+        &-title {
+          margin-bottom: 10px;
+          line-height: 32px;
         }
       }
     }

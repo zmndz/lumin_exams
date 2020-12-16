@@ -240,6 +240,7 @@ export const actions = {
 
     const url = '/operator/test/testLists';
     let result = await execute('POST', url, requestBody);
+    console.log("1", result)
     if (result && (result.success === true)) {
       commit('SET_ADMIN_ACTIVE_EXAMS', result.data.newTest);
       return result.data.newTest;
@@ -268,6 +269,7 @@ export const actions = {
 
     const url = '/operator/test/testLists';
     let result = await execute('POST', url, requestBody);
+    console.log("2", result)
     if (result && (result.success === true)) {
       commit('SET_ADMIN_EXPIRED_EXAMS', result.data.oldTest);
       return result.data.oldTest;
@@ -309,6 +311,7 @@ export const actions = {
 
     const url = '/operator/test/testLists';
     let result = await execute('POST', url, requestBody);
+    console.log("3", result)
     if (result && (result.success === true)) {
       let active = [];
       let expired = [];
@@ -392,33 +395,24 @@ export const actions = {
   },
   async submitPdfFile({ dispatch, commit, state }, payload) {
     const url = '/operator/test/uploadSavePdf';
-    let requestBody = new FormData();
-    requestBody.append("testID", payload.testID);
-    requestBody.append("url", payload.url);
-    requestBody.append("showTest", payload.showTest);
-    requestBody.append("nameFile", payload.nameFile);
-    requestBody.append("countDescriptive", payload.countDescriptive);
-    let config = {headers: { 'Content-Type': 'multipart/form-data' }}
-      return await this.$axios.post(url, requestBody, config).then((res) => {
-      console.log("ressss:", res)
-      if (res.data && (res.data.success === true)) {
-        return res.data;
-      } else if (res.data && res.data.success === false && (res.data.code === 702))  {
-        console.log("verify error store");
-        this.$toast.error(
-          "خطا در فایل سوالات. لطفا فایل سوالات را اصلاح کنید"
-        )
-        return false;
+    let requestBody = {
+      testID: payload.testID,
+      url: payload.url,
+      showTest: payload.showTest,
+      nameFile: payload.nameFile,
+      countDescriptive: payload.countDescriptive,
+    }
+    let result = await execute('POST', url, requestBody);
+      console.log("ressss:", result)
+      if (result && (result.success === true)) {
+        return result;
       } else {
         console.log("verify error store");
         this.$toast.error(
-          "آپلود فایل سوالات با خطا مواجه شد"
+          "آپلود فایل پی دی اف سوالات با خطا مواجه شد"
         )
         return false;
       }
-    }).catch((error) => {
-      console.log("RES error: ", error);
-    })
   },
 
   async deleteQuestionFile({ dispatch, commit, state }, payload) {
@@ -428,6 +422,9 @@ export const actions = {
 
     let result = await execute('POST', url, requestBody);
     if (result && (result.success === true)) {
+      this.$toast.success(
+        "سوالات با موفقیت حذف شد"
+      )
       console.log("result", result);
       return true;
     } else {

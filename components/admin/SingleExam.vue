@@ -56,22 +56,31 @@
               </b-button>
 
               <div v-else>
-                  {{index}}
                 <div v-if="!exam.isActive" class="exams__questions-upload-trigger" @click="openUploadDialog('js-examQuestionsFile-' + index, index)">
-                <!-- <div v-if="false" @click="openUploadDialog('js-examQuestionsFile-' + index, index)"> -->
                   <span class="exams__questions-upload-icon">+</span> آپلود سوالات
                 </div>
-                <div v-else class="exams__questions-upload-file">
-                  <div
-                    class="exams__questions-upload-file-name"
-                    @click="exam.isPdf ?
-                      setCurrentExamPreviewPdf({url: exam.pdfUrl, nameFile: exam.nameFile, testID: exam.testID, descriptiveBarom: exam.descriptiveBarom}, true)
-                      :setCurrentExamPreview(exam.questions, true, exam.lessonTitle, index)"
-                  >
-                    مشاهده سوالات: {{ exam ? exam.nameFile : '' }}
+                <div v-else>
+                  <div v-if="exam.isPdf" class="exams__questions-upload-file">
+                    <div
+                      class="exams__questions-upload-file-name"
+                      @click="setCurrentExamPreviewPdf({url: exam.pdfUrl, nameFile: exam.nameFile, testID: exam.testID, exam: exam}, true, true)"
+                    >
+                      مشاهده سوالات: {{ exam ? exam.nameFile : '' }}
+                    </div>
+                    <div class="exams__questions-upload-file-remove" @click="removeFile(index, exam.testID)">
+                      x
+                    </div>
                   </div>
-                  <div class="exams__questions-upload-file-remove" @click="removeFile(index, exam.testID)">
-                    x
+                  <div v-else class="exams__questions-upload-file">
+                    <div
+                      class="exams__questions-upload-file-name"
+                      @click="setCurrentExamPreview({questions: exam.questions, lessonTitle: exam.lessonTitle}, true, true)"
+                    >
+                      مشاهده سوالات: {{ exam ? exam.nameFile : '' }}
+                    </div>
+                    <div class="exams__questions-upload-file-remove" @click="removeFile(index, exam.testID)">
+                      x
+                    </div>
                   </div>
                 </div>
               </div>
@@ -136,17 +145,16 @@
       </b-modal>
 
       <b-modal v-if="currentExamPreviewPdf" size="xl" ref="modal-questions-preview-pdf" id="modal-questions-preview-pdf" no-close-on-backdrop centered>
-        <template #modal-header="{ close }">
+        <template #modal-header="{}">
           <div class="exams__modal-preview">
             <div>
               فایل: <strong>{{currentExamPreviewPdf.lessonTitle}}</strong>
             </div>
-            <div @click="close()" class="exams__modal-close">X</div>
           </div>
         </template>
         <div class="exams__modal-pdf">
           <div class="row">
-            <div class="col-12 col-md-4 border-left">
+            <div v-if="!isPdfExist" class="col-12 col-md-4 border-left">
               <div class="row">
                 <div class="col-12">
                   <b-form-group
@@ -155,7 +163,6 @@
                     label-for="input-descriptive-count"
                   >
                     <b-form-input
-                      :disabled="false"
                       required
                       id="input-descriptive-count"
                       type="number"
@@ -224,52 +231,77 @@
                 </div>
               </div>
             </div>
-            <div class="col-12 col-md-8">
+            <div class="col-12 col-md-8" :class="{'col-md-12': isPdfExist}">
               <div id="pdf-viewer"></div>
             </div>
           </div>
         </div>
         <template #modal-footer="{ close }">
           <div style="display: flex; justify-content: flex-start;width: 100%;">
-            <b-button class="ml-4" size="lg" variant="success" @click="pdfFormSubmit()">
+            <b-button class="ml-4" size="lg" variant="success" @click="!isPdfExist ? pdfFormSubmit() : close()">
               تایید سوالات
             </b-button>
-            <b-button size="sm" variant="outline-danger" @click="close()">
+            <b-button size="sm" variant="outline-danger" @click="!isPdfExist ? pdfCancelSubmit() : close()">
               انصراف
             </b-button>
           </div>
         </template>
       </b-modal>
 
-      <b-modal v-if="currentExamPreview" size="xl" ref="modal-questions-preview" id="modal-questions-preview" centered>
-        <template #modal-header="{ close }">
+      <b-modal v-if="currentExamPreview" size="xl" ref="modal-questions-preview" id="modal-questions-preview" no-close-on-backdrop centered>
+        <template #modal-header="{}">
           <div class="exams__modal-preview">
             <div>
-              سوالات آزمون <strong>{{currentExamPreview.lessonTitle}}</strong>
+              فایل: <strong>{{currentExamPreview.nameFile}}</strong>
             </div>
-            <div @click="close()" class="exams__modal-close">X</div>
           </div>
         </template>
-        <div v-for="(question, index) in currentExamPreview.questions" :key="index" class="exams__modal-questions">
-          <div class="exams__modal-questions-title">
-            <span v-html="question.id + '-' +question.title"></span>
-          </div>
-          <div v-if="question.type === 'test'">
-            <!-- {{question.type}} -->
-            <div v-for="(option, index2) in question.options" :key="index2" style="margin-right:16px;margin-bottom:8px;" >
-              <span v-html="index2+1 +') ' + option.text"></span>
-              <b-badge v-if="question.selected == option.value" variant="success">گزینه صحیح</b-badge>
+        <div class="exams__modal-word">
+          <div class="row">
+            <div v-if="!isWordExist" class="col-12 col-md-4">
+              <div v-if="isWordDescriptiveExist" class="row">
+                <div class="col-12">
+                  <b-form-group
+                    id="fieldset-1"
+                    label="جمع نمره سوالات تشریحی"
+                    label-for="input-descriptive-barom"
+                  >
+                    <b-form-input
+                      required
+                      id="input-descriptive-barom"
+                      type="number"
+                      :state="wordFormValidation(wordQuestions.descriptiveBarom)"
+                      aria-describedby="input-descriptive-barom-feedback"
+                      v-model="wordQuestions.descriptiveBarom"
+                    >
+                    </b-form-input>
+                  </b-form-group>
+                </div>
+              </div>
+            </div>
+            <div class="col-12" :class="{'col-md-12': isWordExist, 'col-md-8': isWordDescriptiveExist}">
+              <div v-for="(question, index) in currentExamPreview.questions" :key="index" class="exams__modal-questions">
+                <div class="exams__modal-questions-title">
+                  <span v-html="question.id + '-' +question.title"></span>
+                </div>
+                <div v-if="question.type === 'test'">
+                  <div v-for="(option, index2) in question.options" :key="index2" style="margin-right:16px;margin-bottom:8px;" >
+                    <span v-html="index2+1 +') ' + option.text"></span>
+                    <b-badge v-if="question.selected == option.value" variant="success">گزینه صحیح</b-badge>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <template #modal-footer="{ ok }">
+        <template #modal-footer="{ close }">
           <div style="display: flex; justify-content: flex-start;width: 100%;">
-            <b-button class="ml-4" size="lg" variant="success" @click="ok()">
+            <b-button class="ml-4" size="lg" variant="success" @click="!isWordExist ? wordFormSubmit() : close()">
               تایید سوالات
             </b-button>
-            <!-- <b-button size="sm" variant="outline-danger" @click="close()">
+            <b-button size="sm" variant="outline-danger" @click="!isWordExist ? wordCancelSubmit() : close()">
               انصراف
-            </b-button> -->
+            </b-button>
           </div>
         </template>
       </b-modal>
@@ -299,11 +331,19 @@ export default {
         descriptiveCount: null,
         descriptiveBarom: null,
       },
+      wordQuestions: {
+        testCount: null,
+        testQuestions: [],
+        descriptiveCount: null,
+        descriptiveBarom: null,
+      },
       currentExamPreviewPdf: [],
       currentExamPreview: [],
       currentExamReport: [],
       questionFile: [],
-      isPDF: false,
+      isPdfExist: false,
+      isWordExist: false,
+      isWordDescriptiveExist: false,
       length: null,
       questionFileUploader: document.getElementsByClassName('exams__questions-upload'),
     }
@@ -314,7 +354,6 @@ export default {
       'getAdminExamSearch',
     ]),
     isExamListEmpty() {
-      console.log("z", this.examsList)
       return this.examsList.length;
     },
     noResultMessage() {
@@ -329,6 +368,7 @@ export default {
       'uploadQuestionFile',
       'deleteQuestionFile',
       'uploadPdfFile',
+      'submitQuestionFile',
       'submitPdfFile',
       'updateExamList',
       'totalReport',
@@ -359,7 +399,6 @@ export default {
           ...this.pdfQuestions.testQuestions,
           ...options,
         ];
-        console.log("WQQQ", this.currentExamPreviewPdf)
         let params = {
           testID: this.currentExamPreviewPdf.testID,
           url: this.currentExamPreviewPdf.url,
@@ -382,11 +421,44 @@ export default {
         )
       }
     },
-    wordFormSubmit(input) {
-
+    pdfCancelSubmit() {
+      this.updateExamList({index: this.currentExamPreviewPdf.localIndex, isActive: null, nameFile: null, questions: null, isPdf: null, pdfUrl: null});
+      this.$refs['modal-questions-preview-pdf'].hide();
     },
     pdfFormValidation(input) {
       if(input && input.length>0) {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    async wordFormSubmit(input) {
+      let temp1 = this.wordFormValidation(this.wordQuestions.descriptiveBarom);
+      if (temp1) {
+        let params = {
+          testID: this.currentExamPreview.testID,
+          countDescriptive: (this.wordQuestions.descriptiveBarom * 1),
+        }
+        let result = await this.submitQuestionFile(params);
+        if (result && result.success == true) {
+          this.$refs['modal-questions-preview'].hide();
+          this.$toast.success(
+            "فایل سوالات با موفقیت آپلود شد"
+          )
+          return true;
+        }
+      } else {
+        this.$toast.error(
+          "لطفا موارد قرمز رنگ را وارد کنید"
+        )
+      }
+    },
+    wordCancelSubmit() {
+      this.updateExamList({index: this.currentExamPreview.localIndex, isActive: null, nameFile: null, questions: null, isPdf: null, pdfUrl: null});
+      this.$refs['modal-questions-preview'].hide();
+    },
+    wordFormValidation(input) {
+      if((input && input.length>0) || (input === 0)) {
         return true;
       } else {
         return false;
@@ -455,23 +527,36 @@ export default {
       this.currentExamReport = result.data.reports;
       this.$refs['modal-total-report'].show();
     },
+    resetPdfQuestions() {
+      this.pdfQuestions = {
+        testCount: null,
+        testQuestions: [],
+        descriptiveCount: null,
+        descriptiveBarom: null,
+      }
+    },
+    resetWordQuestions() {
+      this.wordQuestions = {
+        testCount: null,
+        testQuestions: [],
+        descriptiveCount: null,
+        descriptiveBarom: null,
+      }
+    },
     async setFile(event, index, exam) {
       let file = event.target.files[0];
       if (file.type === 'application/pdf') {
         this.isPDF = true;
-        let result = await this.uploadPdfFile({testID: this.examsList[index].testID, testFile: file})
+        let result = await this.uploadPdfFile({testID: this.examsList[index].testID, testFile: file});
         if (result) {
-          this.setCurrentExamPreviewPdf({url: result.url, nameFile: result.nameFile, testID: this.examsList[index].testID}, true);
-          this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions});
+          this.setCurrentExamPreviewPdf({url: result.url, nameFile: result.nameFile, testID: this.examsList[index].testID, index: index}, true, false);
+          this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions, isPdf: true, pdfUrl: result.url});
         }
       } else {
         let result = await this.uploadQuestionFile({testID: this.examsList[index].testID, testFile: file})
         if (result) {
-          this.setCurrentExamPreview(result.questions, false);
-          this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions});
-          this.$toast.success(
-            "فایل سوالات با موفقیت آپلود شد"
-          )
+          this.setCurrentExamPreview({questions: result.questions, nameFile: result.lessonTitle, testID: this.examsList[index].testID, index: index}, true, false);
+          this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions, isPdf: false, pdfUrl: null,});
         }
       }
     },
@@ -488,24 +573,49 @@ export default {
       this.currentExamPreview = [];
       this.$refs['modal-questions-preview'].hide();
     },
-    setCurrentExamPreviewPdf(pdfData, openModal) {
+    setCurrentExamPreviewPdf(pdfData, openModal, isPdfExist) {
+      this.resetPdfQuestions();
+      if (isPdfExist) {
+        this.isPdfExist = true;
+      } else {
+        this.isPdfExist = false;
+      }
       this.currentExamPreviewPdf = [];
       this.currentExamPreviewPdf = {
-        lessonTitle: pdfData.nameFile,
         url: pdfData.url,
+        lessonTitle: pdfData.nameFile,
         testID: pdfData.testID,
+        localIndex: pdfData.index,
       };
-
       if (openModal) {
         this.pdf(pdfData.url);
         this.$refs['modal-questions-preview-pdf'].show();
       }
     },
-    setCurrentExamPreview(clickedExam, openModal, lessonTitle, index) {
+    setCurrentExamPreview(wordData, openModal, isWordExist) {
+      this.resetWordQuestions();
+      let descriptiveCount = 0;
+      wordData.questions.map((item, index) => {
+        if ( item.type === 'descriptive' ) {
+          descriptiveCount++;
+        }
+      })
+      if(descriptiveCount) {
+        this.isWordDescriptiveExist = true;
+      } else {
+        this.wordQuestions.descriptiveBarom = 0;
+      }
+      if (isWordExist) {
+        this.isWordExist = true;
+      } else {
+        this.isWordExist = false;
+      }
       this.currentExamPreview = [];
       this.currentExamPreview = {
-        lessonTitle: lessonTitle,
-        questions: clickedExam,
+        nameFile: wordData.nameFile,
+        questions: wordData.questions,
+        testID: wordData.testID,
+        localIndex: wordData.index,
       };
       if (openModal) {
         this.$refs['modal-questions-preview'].show();
@@ -837,6 +947,10 @@ export default {
       }
 
       &-pdf {
+        text-align: right;
+      }
+
+      &-word {
         text-align: right;
       }
 

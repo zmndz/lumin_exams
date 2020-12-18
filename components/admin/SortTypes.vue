@@ -1,50 +1,60 @@
 <template>
-  <div class="exams__sort">
-    <div class="exams__sort-header">
-      <div class="exams__sort-title">
-        فیلتر آزمون‌ها بر اساس: 
+  <div>
+    <div class="exams__sort">
+      <div class="exams__sort-header">
+        <div class="exams__sort-title">
+          فیلتر آزمون‌ها بر اساس:
+        </div>
+        <div class="exams__sort-checkbox">
+          <b-form-checkbox v-model="onlyExamChecked" size="lg" name="check-button" switch>
+          فقط بدون سوال
+          </b-form-checkbox>
+        </div>
       </div>
-      <div class="exams__sort-checkbox">
-        <b-form-checkbox v-model="onlyExamChecked" size="lg" name="check-button" switch>
-        فقط بدون سوال
-        </b-form-checkbox>
-      </div>       
+      <ul class="exams__sort-list">
+        <li
+          class="exams__sort-types"
+          @click="setActiveSortType(sortTypes.availableExams.title)"
+          :class="{' exams__sort-types--active': isActiveSortType(sortTypes.availableExams.title)}"
+          >
+            {{sortTypes.availableExams.label}}
+        </li>
+        <li
+          class="exams__sort-types"
+          @click="setActiveSortType(sortTypes.expiredExams.title)"
+          :class="{' exams__sort-types--active': isActiveSortType(sortTypes.expiredExams.title)}"
+          >
+            {{sortTypes.expiredExams.label}}
+        </li>
+        <li
+          class="exams__sort-types"
+          @click="setActiveSortType(sortTypes.allExams.title)"
+          :class="{' exams__sort-types--active': isActiveSortType(sortTypes.allExams.title)}"
+          >
+            {{sortTypes.allExams.label}}
+        </li>
+      </ul>
     </div>
-    <ul class="exams__sort-list">
-      <li 
-        class="exams__sort-types"
-        @click="setActiveSortType(sortTypes.availableExams.title)"
-        :class="{' exams__sort-types--active': isActiveSortType(sortTypes.availableExams.title)}"
-        >
-          {{sortTypes.availableExams.label}} 
-      </li>
-      <li 
-        class="exams__sort-types"
-        @click="setActiveSortType(sortTypes.expiredExams.title)"
-        :class="{' exams__sort-types--active': isActiveSortType(sortTypes.expiredExams.title)}"
-        >
-          {{sortTypes.expiredExams.label}} 
-      </li>
-      <li 
-        class="exams__sort-types"
-        @click="setActiveSortType(sortTypes.allExams.title)"
-        :class="{' exams__sort-types--active': isActiveSortType(sortTypes.allExams.title)}"
-        >
-          {{sortTypes.allExams.label}} 
-      </li>
-    </ul>               
+
+    <div class="exams__list-wrapper">
+      <SingleExam ref="singleExam" :examList="getAdminCurrentExams" :onlyActive="onlyExamChecked" />
+    </div>
   </div>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import SingleExam from '~/components/admin/SingleExam'
 
 export default {
+  components: {
+    SingleExam,
+  },
   data() {
     return {
       // onlyExamChecked: false,
       // activeSortType: 'AVAILABLE_EXAMS',
-      sortTypes: {      
+      sortTypes: {
         availableExams:{
           id: 1,
           title: 'AVAILABLE_EXAMS',
@@ -70,6 +80,7 @@ export default {
     ...mapGetters({
       activeSortType: 'getAdminActiveSortType',
       isOnlyExamsChecked: 'getAdminOnlyExamsChecked',
+      getAdminCurrentExams: 'getAdminCurrentExams',
     }),
     onlyExamChecked: {
       get: function() {
@@ -177,7 +188,7 @@ export default {
       }
     }
   }
-  
+
   // large devices (laptops, 768px and up)
   @media (min-width: 991.98px) {
     .exams {
@@ -211,7 +222,7 @@ export default {
       }
 
       &__single {
-        
+
         &-wrapper:nth-child(2n+0) {
           margin-left: 24px;
         }

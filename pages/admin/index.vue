@@ -13,9 +13,9 @@
 
     <SortTypes />
 
-    <div class="exams__list-wrapper">
+    <!-- <div class="exams__list-wrapper">
       <SingleExam :examsList="getAdminCurrentExams" />
-    </div>
+    </div> -->
 
     <b-modal id="modal-new-exam"  size="md" hide-footer centered>
       <h1 class="my-4 text-center" style="height: 120px;display:flex; align-items:center;justify-content:center;color: #949494;font-weight: bold;">به زودی...</h1>

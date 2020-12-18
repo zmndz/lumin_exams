@@ -1,8 +1,8 @@
 <template>
   <div v-if="isExamListEmpty" class="">
 
-    <div v-if="(!getAdminOnlyExamsChecked)" class="exams__list">
-      <div class="exams__single-wrapper" v-for="(exam, index) in examsList" :key="index">
+    <div class="exams__list">
+      <div class="exams__single-wrapper" v-for="(exam, index) in examList" :key="index">
         <div class="exams__single">
           <div class="exams__image-wrapper">
             <img class="exams__image" :class="{'exams__image--expired' : exam.isExpire}" src="~/assets/images/books/book_placeholder.svg" alt="">
@@ -258,12 +258,12 @@
         </template>
         <div class="exams__modal-word">
           <div class="row">
-            <div v-if="!isWordExist" class="col-12 col-md-4">
+            <div v-if="!isWordExist" class="col-12 col-lg-4">
               <div v-if="isWordDescriptiveExist" class="row">
                 <div class="col-12">
                   <b-form-group
                     id="fieldset-1"
-                    label="جمع نمره سوالات تشریحی"
+                    :label="'جمع نمره سوالات تشریحی' + '(' + currentExamPreview.descriptiveCount  + ' سوال' + ')'"
                     label-for="input-descriptive-barom"
                   >
                     <b-form-input
@@ -279,15 +279,17 @@
                 </div>
               </div>
             </div>
-            <div class="col-12" :class="{'col-md-12': isWordExist, 'col-md-8': isWordDescriptiveExist}">
-              <div v-for="(question, index) in currentExamPreview.questions" :key="index" class="exams__modal-questions">
-                <div class="exams__modal-questions-title">
-                  <span v-html="question.id + '-' +question.title"></span>
-                </div>
-                <div v-if="question.type === 'test'">
-                  <div v-for="(option, index2) in question.options" :key="index2" style="margin-right:16px;margin-bottom:8px;" >
-                    <span v-html="index2+1 +') ' + option.text"></span>
-                    <b-badge v-if="question.selected == option.value" variant="success">گزینه صحیح</b-badge>
+            <div class="col-12" :class="{'col-lg-12': isWordExist, 'col-lg-8': isWordDescriptiveExist}">
+              <div class="exams__modal-questions-wrapper">
+                <div v-for="(question, index) in currentExamPreview.questions" :key="index" class="exams__modal-questions">
+                  <div class="exams__modal-questions-title">
+                    <span v-html="question.id + '-' +question.title"></span>
+                  </div>
+                  <div v-if="question.type === 'test'">
+                    <div v-for="(option, index2) in question.options" :key="index2" style="margin-right:16px;margin-bottom:8px;" >
+                      <span v-html="index2+1 +') ' + option.text"></span>
+                      <b-badge v-if="question.selected == option.value" variant="success">گزینه صحیح</b-badge>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -307,8 +309,8 @@
       </b-modal>
 
     </div>
-    <div v-else v-html="onlyExamsCheckedMessage" class="exams__message">
-    </div>
+    <!-- <div v-else v-html="onlyExamsCheckedMessage" class="exams__message">
+    </div> -->
   </div>
   <div v-else v-html="noResultMessage" class="exams__message">
     <!-- نتیجه ای برای عبارت {{getAdminExamSearch}} در آزمون ها وجود ندارد -->
@@ -320,7 +322,7 @@
 import { mapActions, mapGetters } from 'vuex';
 
 export default {
-  props:['examsList'],
+  props:['examList', 'onlyActive'],
   components: {
   },
   data() {
@@ -350,11 +352,11 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'getAdminOnlyExamsChecked',
+      'getAdminCurrentExams',
       'getAdminExamSearch',
     ]),
     isExamListEmpty() {
-      return this.examsList.length;
+      return this.examList.length;
     },
     noResultMessage() {
       return this.getAdminExamSearch.length ?  `نتیجه ای برای عبارت ${this.getAdminExamSearch} وجود ندارد ` : 'آزمونی وجود ندارد';
@@ -547,15 +549,15 @@ export default {
       let file = event.target.files[0];
       if (file.type === 'application/pdf') {
         this.isPDF = true;
-        let result = await this.uploadPdfFile({testID: this.examsList[index].testID, testFile: file});
+        let result = await this.uploadPdfFile({testID: this.examList[index].testID, testFile: file});
         if (result) {
-          this.setCurrentExamPreviewPdf({url: result.url, nameFile: result.nameFile, testID: this.examsList[index].testID, index: index}, true, false);
+          this.setCurrentExamPreviewPdf({url: result.url, nameFile: result.nameFile, testID: this.examList[index].testID, index: index}, true, false);
           this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions, isPdf: true, pdfUrl: result.url});
         }
       } else {
-        let result = await this.uploadQuestionFile({testID: this.examsList[index].testID, testFile: file})
+        let result = await this.uploadQuestionFile({testID: this.examList[index].testID, testFile: file})
         if (result) {
-          this.setCurrentExamPreview({questions: result.questions, nameFile: result.lessonTitle, testID: this.examsList[index].testID, index: index}, true, false);
+          this.setCurrentExamPreview({questions: result.questions, nameFile: result.lessonTitle, testID: this.examList[index].testID, index: index}, true, false);
           this.updateExamList({index: index, isActive: true, nameFile: file.name, questions: result.questions, isPdf: false, pdfUrl: null,});
         }
       }
@@ -603,6 +605,7 @@ export default {
       if(descriptiveCount) {
         this.isWordDescriptiveExist = true;
       } else {
+        this.isWordDescriptiveExist = false;
         this.wordQuestions.descriptiveBarom = 0;
       }
       if (isWordExist) {
@@ -616,6 +619,7 @@ export default {
         questions: wordData.questions,
         testID: wordData.testID,
         localIndex: wordData.index,
+        descriptiveCount: descriptiveCount,
       };
       if (openModal) {
         this.$refs['modal-questions-preview'].show();
@@ -1001,6 +1005,11 @@ export default {
           border-bottom: 1px solid #ccc;
         }
 
+        &-wrapper {
+          height: 50vh;
+          overflow-y: scroll;
+        }
+
         &-title {
           margin-bottom: 10px;
           line-height: 32px;
@@ -1027,6 +1036,17 @@ export default {
           margin-left: 0px;
         }
       }
+
+      &__modal {
+        &-questions {
+
+          &-wrapper {
+            height: 70vh;
+            overflow-y: scroll;
+          }
+        }
+      }
+
     }
   }
 

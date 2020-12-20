@@ -352,7 +352,6 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'getAdminCurrentExams',
       'getAdminExamSearch',
     ]),
     isExamListEmpty() {

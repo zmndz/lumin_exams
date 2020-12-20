@@ -1,6 +1,20 @@
 import qs from "querystring";
 import { execute } from "~/utils/publicScripts"
 
+function check(data) {
+  let check = localStorage.getItem("adminOnlyExamsChecked");
+  if (check !== null) {
+    if (check === 'true') {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+
+}
+
 export const state = () => ({
   userType: '',
   admin: {
@@ -11,7 +25,7 @@ export const state = () => ({
     role: '',
     name: '',
     isAdminLoggedIn: false,
-    isOnlyExamsChecked: false,
+    isOnlyExamsChecked: localStorage.getItem("adminOnlyExamsChecked") !== null ? localStorage.getItem("adminOnlyExamsChecked") === 'true' ? true : false : false,
     activeSortType: 'AVAILABLE_EXAMS',
 
     examSearch: '',
@@ -47,6 +61,11 @@ export const getters = {
     return state.admin.activeSortType;
   },
   getAdminOnlyExamsChecked(state) {
+    if (state.admin.isOnlyExamsChecked) {
+      localStorage.setItem('adminOnlyExamsChecked', true);
+    } else {
+    localStorage.setItem('adminOnlyExamsChecked', false);
+    }
     return state.admin.isOnlyExamsChecked;
   },
   getAdminExamSearch(state) {
@@ -59,7 +78,20 @@ export const getters = {
     return state.admin.expiredExams;
   },
   getAdminCurrentExams(state) {
-    return state.admin.currentExams;
+    let filteredCurrent = [];
+    let current = state.admin.currentExams;
+    let isOnlyExamsChecked = state.admin.isOnlyExamsChecked;
+
+    if (isOnlyExamsChecked) {
+      current.map((item, index) => {
+        if (item.isActive) {
+          filteredCurrent.push(item);
+        }
+      });
+      current = filteredCurrent;
+    };
+
+    return current;
   },
 }
 
@@ -91,7 +123,6 @@ export const mutations = {
   SET_ADMIN_ONLY_EXAM_CHECKED(state, data) {
     state.admin.isOnlyExamsChecked = data;
   },
-
   SET_ADMIN_EXAM_SEARCH(state, data) {
     state.admin.examSearch = data;
   },
@@ -192,10 +223,10 @@ export const actions = {
     localStorage.removeItem('userType');
   },
   async setAdminActiveSortType({ dispatch, commit }, payload) {
-    commit('SET_ADMIN_ACTIVE_SORT_TYPE', payload);
     dispatch('fetchAdminAllExams', payload);
   },
   setAdminOnlyExamChecked({ dispatch, commit }, payload) {
+    localStorage.setItem('adminOnlyExamsChecked', payload);
     commit('SET_ADMIN_ONLY_EXAM_CHECKED', payload);
   },
   setAdminExamSearch({ dispatch, commit }, payload) {
@@ -417,9 +448,7 @@ export const actions = {
   },
   updateExamList({ dispatch, commit, state }, payload) {
     console.log("xxx", payload);
-
 // TO DO: fix upload issue after two time
-
     commit('UPDATE_ADMIN_EXAMS', payload)
   },
 }

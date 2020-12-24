@@ -42,6 +42,8 @@ export default {
     // https://go.nuxtjs.dev/pwa
     '@nuxtjs/pwa',
     '@nuxtjs/toast',
+    ['vue-scrollto/nuxt', { duration: 300 }],
+
   ],
 
   loading: {

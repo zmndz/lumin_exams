@@ -1,5 +1,6 @@
 import qs from "querystring";
 import { execute } from "~/utils/publicScripts";
+import moment from 'moment'
 
 export const state = () => ({
   student: {
@@ -20,15 +21,8 @@ export const state = () => ({
     isStudentLoggedIn: false,
     activeSortType: '',
 
-    isExamStarted: false,
-    currentExam: {
-      title: null,
-      questions: [],
-      startTime: null,
-      endTime: null,
-      noneAnsweredQuestions: null,
-      markedQuestions: [],
-    },
+    currentExam: [],
+    isExamsLoadingActive: true,
   },
 })
 
@@ -54,26 +48,11 @@ export const getters = {
   getStudentExams(state) {
     return state.student.exams;
   },
-  getStudentIsExamStarted(state) {
-    return state.student.isExamStarted;
-  },
   getCurrentExam(state) {
-    let storage = JSON.parse(localStorage.getItem('studentCurrentExam'));
-    if (storage) {
-      console.log("yes", storage)
-      let length = storage.questions.length;
-      let count = 0;
-      storage.questions.map((item, index) => {
-        if (item.selected) {
-          count++;
-        }
-      })
-      storage.noneAnsweredQuestions = length - count;
-      return storage;
-    } else {
-      console.log("no",state.student.currentExam)
-      return state.student.currentExam;
-    }
+    return state.student.currentExam;
+  },
+  getIsExamsLoadingActive(state) {
+    return state.student.isExamsLoadingActive;
   },
 }
 
@@ -112,11 +91,11 @@ export const mutations = {
     state.student.isStudentLoggedIn = false;
     state.admin.isAdminLoggedIn = false;
   },
-  SET_IS_EXAM_STARTED(state, data) {
-    state.student.isExamStarted = data;
-  },
   SET_CURRENT_EXAM(state, data) {
     state.student.currentExam = data;
+  },
+  SET_EXAMS_LOADING_ACTIVE(state, data) {
+    state.student.isExamsLoadingActive = data;
   },
 }
 
@@ -132,10 +111,6 @@ export const actions = {
     const url = '/student/login';
     let fetchResult = await execute('POST', url, requestBody);
     if (fetchResult && (fetchResult.success === true)) {
-      // let result = {
-      //   token: fetchResult.data.token,
-      // };
-
       let result = {
         name: fetchResult.data.student.name,
         family: fetchResult.data.student.family,
@@ -144,10 +119,8 @@ export const actions = {
         role: fetchResult.data.student.role,
         token: fetchResult.data.token,
       };
-
       commit("SET_STUDENT_LOGIN_DATA", result);
       dispatch('setStudentLoginData', result);
-
       dispatch('setUserType', 'student');
       return fetchResult;
     } else if (fetchResult && (fetchResult.success === false)) {
@@ -179,20 +152,127 @@ export const actions = {
     localStorage.setItem('userType', payload);
   },
   logoutStudent(ctx, payload) {
-    localStorage.removeItem('student');
-    localStorage.removeItem('userType');
+    localStorage.clear();
   },
-  async setStudentActiveSortType({ dispatch, commit }, payload) {
+  async setStudentActiveSortType({ dispatch, commit, state }, payload) {
     commit('SET_STUDENT_ACTIVE_SORT_TYPE', payload);
-    dispatch('fetchStudentExams', payload);
+    let availableExams = [];
+    let correctedExams = [];
+    let upcomingExams = [];
+    let currentDate = moment().format('YYYY-MM-DD');
+    let storageData = localStorage.getItem('studentExams');
+    let checkCache = false;
+    let cachedData = [];
+    if (storageData !== null && storageData !== '' && storageData !== 'false') {
+      cachedData = JSON.parse(localStorage.getItem('studentExams'));
+      if (cachedData.date === currentDate) {
+        checkCache = true;
+      } else {
+        checkCache = false;
+      }
+    } else {
+      checkCache = false;
+    }
+    
+    if (false) {
+    // if (checkCache) {
+      availableExams = cachedData.availableExams;
+      correctedExams = cachedData.correctedExams;
+      upcomingExams = cachedData.upcomingExams;
+      commit('SET_EXAMS_LOADING_ACTIVE', false);
+    } else {
+      let allExams = await dispatch('fetchStudentExams', payload);
+      function timeCompare(startTime, endTime) {
+        let time = moment().format('HH:mm:ss');
+        let result = null;
+        let isBigger = false;
+        let isSmaller = false;
+        if(time >= startTime) {
+          isBigger = true;
+        };
+        if(time <= endTime) {
+          isSmaller = true;
+        };
+
+        if (isBigger && isSmaller) {
+          result = 'BETWEEN';
+        };
+        if (!isBigger && isSmaller) {
+          result = 'SMALLER';
+        };
+        if (isBigger && !isSmaller) {
+          result = 'BIGGER';
+        };
+        return result;
+      };
+      function isDateSmaller(date) {
+        let currentDateFormated = moment().format('YYYY-MM-DD');
+        let examDate = date;
+        return currentDateFormated <= examDate;
+      };
+      function isDateEqual(date) {
+        let currentDateFormated = moment(currentDate, 'YYYY-MM-DD').format('YYYY-MM-DD');
+        let examDate = moment(date, 'YYYY-MM-DD').format('YYYY-MM-DD');
+        return currentDateFormated == examDate;
+      };
+      allExams.map((item) => {
+        if (item.isFinish && item.isResult) {
+          item.type="CORRECTED";
+          correctedExams.push(item);
+        }
+        if (item.isFinish && !item.isResult) {
+          item.type="CORRECTING"
+          correctedExams.push(item);
+        }
+        if (!item.isFinish && isDateEqual(item.date)) {
+          if (timeCompare(item.startTime, item.endTime) === 'BETWEEN') {
+            availableExams.push(item);
+            item.type="NOW"
+          }
+          if (timeCompare(item.startTime, item.endTime) === 'SMALLER') {
+            upcomingExams.push(item);
+            item.type="UPCOMING"
+          }
+          if (timeCompare(item.startTime, item.endTime) === 'BIGGER') {
+            correctedExams.push(item);
+            item.type="ABSENT"
+          }
+        }
+        if (!item.isFinish && !isDateSmaller(item.date)) {
+          item.type="ABSENT"
+          correctedExams.push(item);
+        }
+
+      })
+
+      let dataToCache = {
+        date: currentDate,
+        availableExams: availableExams,
+        correctedExams: correctedExams,
+        upcomingExams: upcomingExams,
+      };
+      localStorage.setItem('studentExams', JSON.stringify(dataToCache));
+    }
+
+    if (payload === 'AVAILABLE_EXAMS') {
+      commit('SET_STUDENT_EXAMS', availableExams);
+    }
+    if (payload === 'CORRECTED_EXAMS') {
+      commit('SET_STUDENT_EXAMS', correctedExams);
+    }
+    if (payload === 'UPCOMING_EXAMS') {
+      commit('SET_STUDENT_EXAMS', upcomingExams);
+    }
   },
   async fetchStudentExams({ dispatch, commit, state }, payload) {
     const url = '/student/profile';
+    commit('SET_EXAMS_LOADING_ACTIVE', true);
     let result = await execute('POST', url);
     if (result && (result.success === true)) {
-      commit('SET_STUDENT_EXAMS', result.data.tests);
+      commit('SET_EXAMS_LOADING_ACTIVE', false);
       return result.data.tests;
     } else {
+      commit('SET_EXAMS_LOADING_ACTIVE', false);
       console.log("student exams error store");
       this.$toast.error(
         "خطا در بارگذاری آزمون ها"
@@ -234,8 +314,10 @@ export const actions = {
     }
   },
   async fetchExamQuestion({ dispatch, commit, state }, payload) {
-    let storage = JSON.parse(localStorage.getItem('studentCurrentExam'));
-    if (storage) {
+    let test_id = payload;
+    let storage = JSON.parse(localStorage.getItem(test_id));
+    if (storage && storage.testID == test_id) {
+      await dispatch('setCurrentExam', {testID: test_id, data: storage})
       return storage
     }
 
@@ -245,9 +327,10 @@ export const actions = {
     const url = '/student/testStudent';
     let result = await execute('POST', url, requestBody);
     if (result && (result.success === true)) {
-      result.data.noneAnsweredQuestions = result.data.questions.length;
-      dispatch('setCurrentExam', result.data)
-      return true;
+      result.data.noneAnsweredCount = result.data.questions.length;
+      result.data.noneAnsweredList = result.data.questions;
+      await dispatch('setCurrentExam', {testID: test_id, data: result.data})
+      return result.data;
     } else if (result && (result.success === false) && result.code == 720) {
       this.$toast.error(
         "زمان آزمون فرا نرسیده است"
@@ -264,7 +347,6 @@ export const actions = {
     requestBody.append("testID", payload.testID);
     requestBody.append("answerStudent", payload.answerStudent);
     let length = payload.answerFiles.length;
-    console.log("length", length)
     for (let index = 0; index < length; index++) {
       requestBody.append("answerFiles", payload.answerFiles[index]);
     }
@@ -284,12 +366,10 @@ export const actions = {
 
   },
   async examReport({ dispatch, commit, state }, payload) {
-    console.log("examReport", payload)
     const url = '/student/testReport';
     let requestBody = {testID: payload};
     let result = await execute('POST', url, requestBody);
     if (result && (result.success === true)) {
-      console.log("result", result.data)
       return result;
     } else {
       this.$toast.error(
@@ -297,16 +377,32 @@ export const actions = {
       )
     }
   },
-  setIsExamStarted({ commit }, payload) {
-    commit('SET_CURRENT_EXAM', payload);
-    localStorage.setItem('studentIsExamStarted', JSON.stringify(payload));
-  },
-  setCurrentExam({ commit }, payload) {
-    commit('SET_IS_EXAM_STARTED', payload);
-    localStorage.setItem('studentCurrentExam', JSON.stringify(payload));
+  async setCurrentExam({ commit }, payload) {
+    localStorage.setItem(payload.testID, JSON.stringify(payload.data));
+    await commit('SET_CURRENT_EXAM', payload.data);
   },
   updateCurrentExam({ dispatch, commit }, payload) {
-    localStorage.setItem('studentCurrentExam', JSON.stringify(payload));
+    localStorage.setItem(payload.testID, JSON.stringify(payload.data));
+  },
+  loadCurrentExam({ dispatch, commit, state }, payload) {
+    let storage = JSON.parse(localStorage.getItem(payload));
+    if (storage) {
+      let length = storage.questions.length;
+      let noneAnsweredList = [];
+      let count = 0;
+      storage.questions.map((item) => {
+        if (item.selected) {
+          count++;
+        } else {
+          noneAnsweredList.push(item)
+        }
+      })
+      storage.noneAnsweredCount = length - count;
+      storage.noneAnsweredList = noneAnsweredList;
+      return storage;
+    } else {
+      return state.student.currentExam;
+    }
   },
 }
 

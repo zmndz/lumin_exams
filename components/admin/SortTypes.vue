@@ -52,8 +52,6 @@ export default {
   },
   data() {
     return {
-      // onlyExamChecked: false,
-      // activeSortType: 'AVAILABLE_EXAMS',
       sortTypes: {
         availableExams:{
           id: 1,
@@ -121,7 +119,6 @@ export default {
       background: #fff;
       padding: 15px;
       border-radius: 10px;
-      // box-shadow: 5px 10px 20px 0 rgba(0, 0, 0, 0.05);
       font-size: 12px;
       box-shadow: 0 3px 6px 0 rgba(32, 33, 36, 0.06);
 

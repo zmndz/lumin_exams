@@ -1,20 +1,33 @@
 <template>
   <div class="courses__wrapper">
-    <!-- <div class="courses__sort">
+    <div class="courses__sort">
       <div class="courses__sort-title">
         فیلتر بر اساس: 
       </div>
       <ul class="courses__sort-list">
-        <li 
-          v-for="(sortType, index) in sortTypes" 
+        <li
           class="courses__sort-types"
-          :key="index" 
-          @click="setActiveSortType(sortType.id)"
-          :class="{' courses__sort-types--active': isActiveSortType(sortType.id)}">
-            {{sortType.title}}
+          @click="setActiveSortType(sortTypes.availableExams.title)"
+          :class="{' courses__sort-types--active': isActiveSortType(sortTypes.availableExams.title)}"
+          >
+            {{sortTypes.availableExams.label}}
+        </li>
+        <li
+          class="courses__sort-types"
+          @click="setActiveSortType(sortTypes.allExams.title)"
+          :class="{' courses__sort-types--active': isActiveSortType(sortTypes.allExams.title)}"
+          >
+            {{sortTypes.allExams.label}}
+        </li>
+        <li
+          class="courses__sort-types"
+          @click="setActiveSortType(sortTypes.expiredExams.title)"
+          :class="{' courses__sort-types--active': isActiveSortType(sortTypes.expiredExams.title)}"
+          >
+            {{sortTypes.expiredExams.label}}
         </li>
       </ul>               
-    </div> -->
+    </div>
 
     <div class="courses__list">
       <StudentExams :examsList="getStudentExams" />
@@ -33,44 +46,49 @@ export default {
   },
   data() {
     return {
-      sortTypes: [
-        {
+      sortTypes: {
+        availableExams:{
           id: 1,
-          title: 'امتحانات امروز',
+          title: 'AVAILABLE_EXAMS',
+          label: 'امتحانات امروز',
+          count: 0,
         },
-        {
+        allExams:{
           id: 2,
-          title: 'امتحانات آینده',
+          title: 'CORRECTED_EXAMS',
+          label: 'امتحانات تصحیح شده',
+          count: 0,
         },
-        {
+        expiredExams: {
           id: 3,
-          title: 'تصحیح شده',
+          title: 'UPCOMING_EXAMS',
+          label: 'امتحانات آینده',
+          count: 0,
         },
-      ],
-      activeSortType: 1,
+      },
     }
   },
   computed: {
     ...mapGetters([
       'getStudentExams',
+      'getIsLoadingActive',
       'getStudentActiveSortType',
     ]),
   },
   methods: {
-    ...mapActions([
-      'loadAllStudentData',
-      'fetchStudentExams',
-    ]),
+    ...mapActions({
+      loadAllStudentData: 'loadAllStudentData',
+      setStudentActiveSortType: 'setStudentActiveSortType',
+    }),
     isActiveSortType(SortTypeId) {
-      return this.activeSortType == SortTypeId
+      return this.getStudentActiveSortType == SortTypeId;
     },
     setActiveSortType(SortTypeId) {
-      this.activeSortType = SortTypeId
+      this.setStudentActiveSortType(SortTypeId);
     },
   },
   mounted() {
-    this.setActiveSortType(this.activeSortType);
-    this.fetchStudentExams();
+    this.setStudentActiveSortType(this.sortTypes.availableExams.title);
   },
   async created() {
     this.loadAllStudentData();

@@ -218,11 +218,10 @@ export const actions = {
     localStorage.setItem('userType', payload);
   },
   logoutAdmin(ctx, payload) {
-    localStorage.removeItem('adminLogin');
-    localStorage.removeItem('adminVerify');
-    localStorage.removeItem('userType');
+    localStorage.clear();
   },
   async setAdminActiveSortType({ dispatch, commit }, payload) {
+    commit('SET_ADMIN_ACTIVE_SORT_TYPE', payload);
     dispatch('fetchAdminAllExams', payload);
   },
   setAdminOnlyExamChecked({ dispatch, commit }, payload) {

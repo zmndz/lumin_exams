@@ -640,10 +640,8 @@ export default {
       background: #fff;
       padding: 12px;
       border-radius: 6px;
-      // box-shadow: 0 2px 3px 0 rgba(32, 33, 36, 0.14);
       color: #989898;
       box-shadow: 0 3px 6px 0 rgba(32, 33, 36, 0.06);
-
     }
 
     &__list {

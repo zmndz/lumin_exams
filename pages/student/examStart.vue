@@ -25,12 +25,13 @@
             </div>
           </div>
           <div class="col-12 col-md-6 col-lg-4">
-            <div class="exam__questions-left">
+            <div v-if="noneAnsweredList.length" class="exam__questions-left" v-scroll-to="'#js-exam__question-' + noneAnsweredList[0].id">
+            <!-- <div v-if="noneAnsweredList.length" class="exam__questions-left"> -->
+            <!-- <div class="exam__questions-left"> -->
               <div class="exam__questions-left-label">
                 سوالات بدون پاسخ:
               </div>
               <div class="exam__questions-left-value">
-                <!-- {{currentExam.noneAnsweredQuestions}} -->
                 {{noneAnswered}}
               </div>
             </div>
@@ -48,7 +49,7 @@
         </div>
       </div>
       <div class="exam__list">
-        <div v-for="(question, index) in currentExam.questions" class="exam__question" :key="index">
+        <div v-for="(question, index) in currentExam.questions" class="exam__question" :id="'js-exam__question-' + question.id" :key="index">
           <div class="exam__title" v-html="(index + 1) + '- ' + question.title">
             <!-- {{index+1}}- {{question.title}} -->
           </div>
@@ -132,7 +133,8 @@
       </div>
       <div style="text-align:center;">
         <b-button variant="success" @click="submitQuestions">بله، مطمئن هستم</b-button>
-        <b-button variant="outline-dangerd" @click="closeConfirm">خیر، ادامه می دهم</b-button>
+        <b-button v-if="noneAnswered" variant="outline-dangerd" @click="closeConfirm" v-scroll-to="'#js-exam__question-' + noneAnsweredList[0].id">خیر، ادامه می دهم</b-button>
+        <b-button v-else variant="outline-dangerd" @click="closeConfirm">خیر، ادامه می دهم</b-button>
       </div>
     </b-modal>
   </div>
@@ -153,6 +155,7 @@ export default {
       minutes: null,
       seconds: null,
       noneAnswered: null,
+      noneAnsweredList: [],
       isThereDescriptive: false,
       questionFile: [],
     }
@@ -167,7 +170,7 @@ export default {
     ...mapActions([
       'loadAllStudentData',
       'updateCurrentExam',
-      'setIsExamStarted',
+      'loadCurrentExam',
       'submitExam',
     ]),
     async setFile(event) {
@@ -187,7 +190,7 @@ export default {
     closeConfirm() {
       this.$refs['modal-confirm'].hide();
     },
-    submitQuestions() {
+    async submitQuestions() {
       let submited = this.currentExam.questions.map((item, index) => {
         return {questionID: item.id, type: item.type, answer: item.selected}
       })
@@ -201,9 +204,9 @@ export default {
         }),
         answerFiles: this.questionFile,
       }
-      let result = this.submitExam(readyData);
+      let result = await this.submitExam(readyData);
       if(result) {
-        this.setIsExamStarted({data: false});
+        // this.updateCurrentExam('');
         this.$router.push('/student');
         this.$toast.success(
           "آزمون با موفقیت به پایان رسید"
@@ -211,22 +214,27 @@ export default {
       }
     },
     selectOption(index, selected) {
-      console.log(index, selected)
       this.questions[index].selected = selected;
     },
     saveAnswers() {
       let length = this.currentExam.questions.length;
+      this.noneAnsweredList.length = 0;
       let count = 0;
       this.currentExam.questions.map((item, index) => {
         if (item.selected) {
           count++;
+        } else {
+          this.noneAnsweredList.push(item)
         }
       })
       this.noneAnswered = length - count;
-      this.updateCurrentExam(this.currentExam);
+      this.currentExam.noneAnsweredCount = this.noneAnswered;
+      this.currentExam.noneAnsweredList = this.noneAnsweredList;
+      this.updateCurrentExam({testID: this.currentExam.testID, data: this.currentExam});
     },
     initiateTimer() {
-      let start = moment(this.currentExam.startTime, "HH:mm:ss a");
+      let currentTime = moment().format("HH:mm:ss")
+      let start = moment(currentTime, "HH:mm:ss a");
       let end = moment(this.currentExam.endTime, "HH:mm:ss a");
       let duration = moment.duration(end.diff(start));
       let milliseconds = parseInt(duration.asMilliseconds());
@@ -262,14 +270,24 @@ export default {
       }, 1000)
     },
   },
-  mounted() {
-    this.currentExam = this.getCurrentExam;
+  async mounted() {
+    let routeQueryString = this.$route.query.testID;
+    this.currentExam = await this.loadCurrentExam(routeQueryString);
     if(this.currentExam) {
-      this.isThereDescriptive = true;
+      this.currentExam.questions.map((item, index) => {
+        if (item.type === 'descriptive') {
+          this.isThereDescriptive = true;
+          return true;
+        } else {
+          this.isThereDescriptive = false;
+          return false;
+        }
+      })
     }
-    this.noneAnswered = this.currentExam.noneAnsweredQuestions
+    this.noneAnswered = this.currentExam.noneAnsweredCount;
+    this.noneAnsweredList = this.currentExam.noneAnsweredList;
     this.initiateTimer();
-    this.setIsExamStarted({data: true});
+    this.updateCurrentExam({testID: this.currentExam.testID, data: this.currentExam});
   },
   async created() {
     this.loadAllStudentData();
@@ -320,9 +338,18 @@ export default {
       display: flex;
       justify-content: space-between;
       margin: 10px 0;
+      cursor: pointer;
 
       &-label {
         margin-left: 4px;
+      }
+
+      &-value {
+        background-color: #BC11FD;
+        color: #fff;
+        padding: 4px 8px 0px 8px;
+        line-height: 24px;
+        border-radius: 4px;
       }
     }
 
@@ -349,7 +376,8 @@ export default {
     }
 
     &__question {
-      margin-bottom: 32px;
+      padding-top: 16px;
+      padding-bottom: 16px;
     }
 
     &__questions-upload {

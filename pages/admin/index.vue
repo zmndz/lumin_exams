@@ -56,7 +56,6 @@ export default {
   },
   methods: {
     ...mapActions([
-      'loadAllAdminData',
       'setAdminExamSearch',
       'fetchAdminActiveExams',
       'fetchAdminExpiredExams',
@@ -88,9 +87,6 @@ export default {
     let pdf = await document.createElement('script')
     await pdf.setAttribute('src', '//mozilla.github.io/pdf.js/build/pdf.js')
     await document.head.appendChild(pdf);
-  },
-  async created() {
-    this.loadAllAdminData();
   }
 }
 </script>

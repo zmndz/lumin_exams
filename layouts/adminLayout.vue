@@ -34,6 +34,7 @@ import { mapActions, mapGetters } from 'vuex'
 export default {
   data() {
     return {
+      adminName: null,
     }
   },
   computed: {
@@ -44,11 +45,20 @@ export default {
   methods: {
     ...mapActions([
       'logoutAdmin',
+      'loadAllAdminData',
     ]),
     logout() {
       this.logoutAdmin();
       this.$router.push('/operator');
     },
+  },
+  async mounted() {
+    if(this.getAdminName) {
+      this.adminName = this.getAdminName;
+    }
+  },
+  async created() {
+    this.loadAllAdminData();
   }
 }
 </script>

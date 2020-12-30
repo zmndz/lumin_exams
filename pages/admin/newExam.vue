@@ -84,31 +84,6 @@ export default {
 
 <style lang="scss" scoped>
 
-  input {
-    border: 1px solid #d9d9d9;
-    background-color: #f9f9f9;
-    padding: 12px;
-    border-radius: 4px;
-    height: 40px;
-    width: 100%;
-
-    &:focus {
-      outline: none;
-    }
-
-    &::-webkit-input-placeholder { /* Chrome/Opera/Safari */
-      color: #bfbfbf;
-    }
-    &::-moz-placeholder { /* Firefox 19+ */
-      color: #bfbfbf;
-    }
-    &:-ms-input-placeholder { /* IE 10+ */
-      color: #bfbfbf;
-    }
-    &:-moz-placeholder { /* Firefox 18- */
-      color: #bfbfbf;
-    }
-  }
 
   .exam {
 

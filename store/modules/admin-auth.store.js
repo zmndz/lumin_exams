@@ -32,6 +32,7 @@ export const state = () => ({
     activeExams: [],
     expiredExams: [],
     currentExams: [],
+    currentExamReport: [],
   },
 })
 
@@ -93,6 +94,9 @@ export const getters = {
 
     return current;
   },
+  getAdminCurrentExamReport(state) {
+    return state.admin.currentExamReport;
+  },
 }
 
 export const mutations = {
@@ -134,6 +138,10 @@ export const mutations = {
   },
   SET_ADMIN_CURRENT_EXAMS(state, data) {
     state.admin.currentExams = data;
+  },
+  SET_ADMIN_CURRENT_EXAMS_REPORT(state, data) {
+    console.log("current report: ", data);
+    state.admin.currentExamReport = data;
   },
   UPDATE_ADMIN_EXAMS(state, data) {
     state.admin.currentExams[data.index].isActive = data.isActive;
@@ -433,22 +441,38 @@ export const actions = {
       return false;
     }
   },
+  updateExamList({ dispatch, commit, state }, payload) {
+    console.log("xxx", payload);
+// TO DO: fix upload issue after two time
+    commit('UPDATE_ADMIN_EXAMS', payload)
+  },
   async totalReport({ dispatch, commit, state }, payload) {
     const url = '/operator/test/totalReport';
     let requestBody = {testID: payload};
     let result = await execute('POST', url, requestBody);
     if (result && (result.success === true)) {
+      commit('SET_ADMIN_CURRENT_EXAMS_REPORT', result.data.reports);
       return result;
     } else {
       this.$toast.error(
-        "مشکل در نمایش نتایج آزمون"
+        "مشکل در بارگذاری لیست دانشجو ها"
       )
     }
   },
-  updateExamList({ dispatch, commit, state }, payload) {
-    console.log("xxx", payload);
-// TO DO: fix upload issue after two time
-    commit('UPDATE_ADMIN_EXAMS', payload)
+  async studentReport({ dispatch, commit, state }, payload) {
+    const url = '/operator/test/studentTotalReport'; // fix student
+    let requestBody = {
+      testID: payload.testID,
+      studentID: payload.studentID,
+    };
+    let result = await execute('POST', url, requestBody);
+    if (result && (result.success === true)) {
+      return result;
+    } else {
+      this.$toast.error(
+        "مشکل در بارگذاری نمرات دانشجو"
+      )
+    }
   },
 }
 

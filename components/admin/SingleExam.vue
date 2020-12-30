@@ -51,7 +51,8 @@
                 @change="setFile($event, index, exam)"
               >
               </b-form-file>
-              <b-button v-if="exam.isExpire" variant="outline-dark" @click="openReport(exam.testID)">
+              <!-- <b-button v-if="exam.isExpire" variant="outline-secondary" @click="openReport(exam.testID)"> -->
+              <b-button v-if="exam.isExpire" variant="outline-secondary" @click="goToReport(exam.testID)">
                 مشاهده نتایج
               </b-button>
 
@@ -108,14 +109,11 @@
           <div class="exams__report-header exams__report-national-code">
             کد ملی
           </div>
-          <div class="exams__report-header exams__report-student-id">
+          <!-- <div class="exams__report-header exams__report-student-id">
             شماره دانشجویی
-          </div>
-          <div class="exams__report-header exams__report-score">
-            نمره
-          </div>
+          </div> -->
         </div>
-        <div v-for="(report, index) in currentExamReport" :key="index" class="exams__report-content">
+        <div v-for="(report, index) in currentExamReport" :key="index" class="exams__report-content" @click="goToReport(report)">
           <div class="exams__report-cell exams__report-row">
             {{index+1}}
           </div>
@@ -125,12 +123,9 @@
           <div class="exams__report-cell exams__report-national-code">
             {{report.nationalCode}}
           </div>
-          <div class="exams__report-cell exams__report-student-id">
+          <!-- <div class="exams__report-cell exams__report-student-id">
             {{report.studentID}}
-          </div>
-          <div class="exams__report-cell exams__report-score">
-            {{report.resultStudent}}
-          </div>
+          </div> -->
         </div>
         <template #modal-footer="{ ok }">
           <div style="display: flex; justify-content: space-between;width: 100%;">
@@ -374,6 +369,15 @@ export default {
       'updateExamList',
       'totalReport',
     ]),
+    async goToReport(testID) {
+      console.log("testID", testID);
+      // let result = await this.totalReport(testID);
+      // if (result && result.success === true) {
+      //   this.currentExamReport = result.data.reports;
+        this.$router.push({path:'/admin/report', query: {testID: testID}})
+      // }
+
+    },
     async pdfFormSubmit(input) {
       let temp1 = this.pdfFormValidation(this.pdfQuestions.descriptiveCount);
       let temp2 = this.pdfFormValidation(this.pdfQuestions.descriptiveBarom);
@@ -524,9 +528,12 @@ export default {
       }
     },
     async openReport(testID) {
-      let result = await this.totalReport(testID);
-      this.currentExamReport = result.data.reports;
-      this.$refs['modal-total-report'].show();
+      // console.log("testID", testID);
+      // let result = await this.totalReport(testID);
+      // if (result && result.success === true) {
+      //   this.currentExamReport = result.data.reports;
+      //   this.$refs['modal-total-report'].show();
+      // }
     },
     resetPdfQuestions() {
       this.pdfQuestions = {
@@ -908,25 +915,28 @@ export default {
       }
 
       &-name {
-        width: 30%;
+        width: 45%;
       }
 
       &-national-code {
-        width: 25%;
+        width: 45%;
       }
 
-      &-student-id {
-        width: 30%;
-      }
-
-      &-score {
-        width: 5%;
-      }
+      // &-student-id {
+      //   width: 30%;
+      // }
 
       &-content {
         width: 100%;
         display: flex;
         margin-bottom: 10px;
+        color: rgb(0, 145, 202);
+        cursor: pointer;
+
+        &:hover {
+          // border-bottom: 1px solid;
+          color: rgb(0, 183, 255);
+        }
       }
 
       &-cell {

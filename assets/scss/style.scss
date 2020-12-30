@@ -1,23 +1,23 @@
 @font-face {
 	font-family: 'vazir';
-	src: url('~assets/fonts/Vazir-light.eot');
-	src: url('~assets/fonts/Vazir-light.eot');
-	src: url('~assets/fonts/Vazir-light.eot?#iefix') format('embedded-opentype'),
-				url('~assets/fonts/Vazir-light.woff2') format('woff2'),
-				url('~assets/fonts/Vazir-light.woff') format('woff'),
-				url('~assets/fonts/Vazir-light.ttf')  format('truetype');
+	src: url('~assets/fonts/Farsi-Digits/Vazir-light-FD-UI.eot');
+	src: url('~assets/fonts/Farsi-Digits/Vazir-light-FD-UI.eot');
+	src: url('~assets/fonts/Farsi-Digits/Vazir-light-FD-UI.eot?#iefix') format('embedded-opentype'),
+				url('~assets/fonts/Farsi-Digits/Vazir-light-FD-UI.woff2') format('woff2'),
+				url('~assets/fonts/Farsi-Digits/Vazir-light-FD-UI.woff') format('woff'),
+				url('~assets/fonts/Farsi-Digits/Vazir-light-FD-UI.ttf')  format('truetype');
 	font-weight: normal;
 	font-style: normal;
 }
 
 @font-face {
 	font-family: 'vazir';
-	src: url('~assets/fonts/Vazir-Bold.eot');
-	src: url('~assets/fonts/Vazir-Bold.eot');
-	src: url('~assets/fonts/Vazir-Bold.eot?#iefix') format('embedded-opentype'),
-				url('~assets/fonts/Vazir-Bold.woff2') format('woff2'),
-				url('~assets/fonts/Vazir-Bold.woff') format('woff'),
-				url('~assets/fonts/Vazir-Bold.ttf')  format('truetype');
+	src: url('~assets/fonts/Farsi-Digits/Vazir-Medium-FD-UI.eot');
+	src: url('~assets/fonts/Farsi-Digits/Vazir-Medium-FD-UI.eot');
+	src: url('~assets/fonts/Farsi-Digits/Vazir-Medium-FD-UI.eot?#iefix') format('embedded-opentype'),
+				url('~assets/fonts/Farsi-Digits/Vazir-Medium-FD-UI.woff2') format('woff2'),
+				url('~assets/fonts/Farsi-Digits/Vazir-Medium-FD-UI.woff') format('woff'),
+				url('~assets/fonts/Farsi-Digits/Vazir-Medium-FD-UI.ttf')  format('truetype');
 	font-weight: bold;
 	font-style: normal;
 }
@@ -26,6 +26,36 @@
 body {
   font-family: 'vazir';
 }
+
+  input {
+    border: 1px solid #c3c3c3;
+    padding: 0 16px;
+    border-radius: 0.25rem;
+    height: 40px;
+    width: 100%;
+
+    &:hover {
+      border-color: #999999;
+    }
+    
+    &:focus {
+      outline: none;
+      border: 2px solid #fbdc8c;
+    }
+
+    &::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+      color: #bfbfbf;
+    }
+    &::-moz-placeholder { /* Firefox 19+ */
+      color: #bfbfbf;
+    }
+    &:-ms-input-placeholder { /* IE 10+ */
+      color: #bfbfbf;
+    }
+    &:-moz-placeholder { /* Firefox 18- */
+      color: #bfbfbf;
+    }
+  }
 
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {

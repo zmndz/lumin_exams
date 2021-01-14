@@ -10,7 +10,7 @@
             {{getAdminName}}
           </div>
         </template>
-        <b-dropdown-item href="#" v-b-modal.modal-archive>آرشیو</b-dropdown-item>
+        <!-- <b-dropdown-item href="#" v-b-modal.modal-archive>آرشیو</b-dropdown-item> -->
         <b-dropdown-item href="#" @click="logout">خروج</b-dropdown-item>
       </b-dropdown>
     </div>

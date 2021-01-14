@@ -4,7 +4,7 @@
       <div v-for="(exam, index) in examsList" class="courses__single" :key="index">
         <div class="courses__image-wrapper">
           <img class="courses__image" src="~/assets/images/books/book_placeholder.svg" alt="">
-          <span class="courses__image-badge" v-text="timeDifference(exam.date)"></span>
+          <span v-if="exam.type === 'NOW' || exam.type === 'UPCOMING'" class="courses__image-badge" v-text="timeDifference(exam.date)"></span>
         </div>
         <div class="courses__details-wrapper">
           <div class="courses__details">
@@ -71,7 +71,7 @@
 
       <b-modal ref="modal-report" id="modal-report" hide-header centered>
         <div style="margin: 30px 0; text-align: center; font-size: 20px;font-weight: bold;">
-          نمره آزمون {{currentReport.name}}: <b-badge variant="info">{{currentReport.score}}</b-badge>
+          نمره آزمون {{currentReport.name}}: <b-badge variant="info">{{currentReport.score | filterDecimals}}</b-badge>
         </div>
         <template #modal-footer="{ ok }">
           <div style="display: flex; justify-content: space-between;width: 100%;">
@@ -85,7 +85,7 @@
     <div v-else v-html="noResultMessage" class="courses__message">
     </div>
   </div>
-  <Loading v-else />
+  <Loading v-else :isOverlay="false" />
 </template>
 
 <script>
@@ -104,6 +104,19 @@ export default {
       currentReport: [],
     }
   },
+  filters: {
+    filterDecimals(value) {
+      if (!value) return 0;
+      let number = null;
+      if (Number(value) === value && value % 1 !== 0) {
+        let decimalCount = 2;
+        return value.toFixed(decimalCount)
+      }
+      if (Number(value) === value && value % 1 === 0) {
+        return value
+      }
+    },
+  },
   computed: {
     ...mapGetters([
       'getIsExamsLoadingActive',
@@ -120,6 +133,29 @@ export default {
       'fetchExamQuestion',
       'examReport',
     ]),
+    // timeCompare(startTime, endTime) {
+    //   let time = moment().format('HH:mm:ss');
+    //   let result = null;
+    //   let isBigger = false;
+    //   let isSmaller = false;
+    //   if(time >= startTime) {
+    //     isBigger = true;
+    //   };
+    //   if(time <= endTime) {
+    //     isSmaller = true;
+    //   };
+
+    //   if (isBigger && isSmaller) {
+    //     result = 'BETWEEN';
+    //   };
+    //   if (!isBigger && isSmaller) {
+    //     result = 'SMALLER';
+    //   };
+    //   if (isBigger && !isSmaller) {
+    //     result = 'BIGGER';
+    //   };
+    //   return result;
+    // },
     async goToExam(testId) {
       let result = await this.fetchExamQuestion(testId);
       if (result) {

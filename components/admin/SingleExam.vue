@@ -51,7 +51,6 @@
                 @change="setFile($event, index, exam)"
               >
               </b-form-file>
-              <!-- <b-button v-if="exam.isExpire" variant="outline-secondary" @click="openReport(exam.testID)"> -->
               <b-button v-if="exam.isExpire" variant="outline-secondary" @click="goToReport(exam.testID)">
                 مشاهده نتایج
               </b-button>
@@ -68,7 +67,7 @@
                     >
                       مشاهده سوالات: {{ exam ? exam.nameFile : '' }}
                     </div>
-                    <div class="exams__questions-upload-file-remove" @click="removeFile(index, exam.testID)">
+                    <div v-if="!checkTimeDifference(exam.date, exam.startTime, exam.endTime)" class="exams__questions-upload-file-remove" @click="removeFile(index, exam.testID)">
                       x
                     </div>
                   </div>
@@ -79,7 +78,7 @@
                     >
                       مشاهده سوالات: {{ exam ? exam.nameFile : '' }}
                     </div>
-                    <div class="exams__questions-upload-file-remove" @click="removeFile(index, exam.testID)">
+                    <div v-if="!checkTimeDifference(exam.date, exam.startTime, exam.endTime)" class="exams__questions-upload-file-remove" @click="removeFile(index, exam.testID)">
                       x
                     </div>
                   </div>
@@ -143,7 +142,7 @@
         <template #modal-header="{}">
           <div class="exams__modal-preview">
             <div>
-              فایل: <strong>{{currentExamPreviewPdf.lessonTitle}}</strong>
+              فایل: <strong>{{currentExamPreviewPdf.lessonTitle}}</strong>zzz
             </div>
           </div>
         </template>
@@ -247,7 +246,7 @@
         <template #modal-header="{}">
           <div class="exams__modal-preview">
             <div>
-              فایل: <strong>{{currentExamPreview.nameFile}}</strong>
+              فایل: <strong>{{currentExamPreview.nameFile}}</strong>zzz
             </div>
           </div>
         </template>
@@ -315,6 +314,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import moment from 'jalali-moment'
 
 export default {
   props:['examList', 'onlyActive'],
@@ -369,14 +369,20 @@ export default {
       'updateExamList',
       'totalReport',
     ]),
+    checkTimeDifference(date, startTime, endTime) {
+      let time = moment().format('HH:mm:ss');
+      let currentDateFormated = moment().format('jYYYY/jM/jD');
+      if (date !== currentDateFormated) {
+        return false;
+      }
+      if(time >= startTime && time <= endTime) {
+        return true;
+      };
+      return false;
+    },
     async goToReport(testID) {
       console.log("testID", testID);
-      // let result = await this.totalReport(testID);
-      // if (result && result.success === true) {
-      //   this.currentExamReport = result.data.reports;
-        this.$router.push({path:'/admin/report', query: {testID: testID}})
-      // }
-
+      this.$router.push({path:'/admin/report', query: {testID: testID}})
     },
     async pdfFormSubmit(input) {
       let temp1 = this.pdfFormValidation(this.pdfQuestions.descriptiveCount);

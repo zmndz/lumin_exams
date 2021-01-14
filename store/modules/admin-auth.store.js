@@ -65,7 +65,7 @@ export const getters = {
     if (state.admin.isOnlyExamsChecked) {
       localStorage.setItem('adminOnlyExamsChecked', true);
     } else {
-    localStorage.setItem('adminOnlyExamsChecked', false);
+      localStorage.setItem('adminOnlyExamsChecked', false);
     }
     return state.admin.isOnlyExamsChecked;
   },
@@ -85,13 +85,13 @@ export const getters = {
 
     if (isOnlyExamsChecked) {
       current.map((item, index) => {
-        if (item.isActive) {
+        if (!item.isActive) {
           filteredCurrent.push(item);
         }
       });
       current = filteredCurrent;
-    };
-
+    }
+    
     return current;
   },
   getAdminCurrentExamReport(state) {
@@ -140,7 +140,6 @@ export const mutations = {
     state.admin.currentExams = data;
   },
   SET_ADMIN_CURRENT_EXAMS_REPORT(state, data) {
-    console.log("current report: ", data);
     state.admin.currentExamReport = data;
   },
   UPDATE_ADMIN_EXAMS(state, data) {
@@ -442,8 +441,6 @@ export const actions = {
     }
   },
   updateExamList({ dispatch, commit, state }, payload) {
-    console.log("xxx", payload);
-// TO DO: fix upload issue after two time
     commit('UPDATE_ADMIN_EXAMS', payload)
   },
   async totalReport({ dispatch, commit, state }, payload) {
@@ -471,6 +468,21 @@ export const actions = {
     } else {
       this.$toast.error(
         "مشکل در بارگذاری نمرات دانشجو"
+      )
+    }
+  },
+  async studentSubmitScore({ dispatch, commit, state }, payload) {
+    const url = '/operator/test/studentSaveResult'; // fix student
+    let requestBody = {
+      resultDescriptive: payload.resultDescriptive,
+      studentID: payload.studentID,
+    };
+    let result = await execute('POST', url, requestBody);
+    if (result && (result.success === true)) {
+      return result;
+    } else {
+      this.$toast.error(
+        "مشکل در ثبت نمره دانشجو"
       )
     }
   },

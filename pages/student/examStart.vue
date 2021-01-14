@@ -25,14 +25,15 @@
             </div>
           </div>
           <div class="col-12 col-md-6 col-lg-4">
-            <div v-if="noneAnsweredList.length" class="exam__questions-left" v-scroll-to="'#js-exam__question-' + noneAnsweredList[0].id">
-            <!-- <div v-if="noneAnsweredList.length" class="exam__questions-left"> -->
-            <!-- <div class="exam__questions-left"> -->
+            <div class="exam__questions-left">
               <div class="exam__questions-left-label">
                 سوالات بدون پاسخ:
               </div>
-              <div class="exam__questions-left-value">
+              <div v-if="noneAnsweredList.length" v-scroll-to="'#js-exam__question-' + noneAnsweredList[0].id" class="exam__questions-left-value">
                 {{noneAnswered}}
+              </div>
+              <div v-else class="exam__questions-left-value">
+                0
               </div>
             </div>
           </div>

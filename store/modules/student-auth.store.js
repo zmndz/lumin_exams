@@ -211,35 +211,49 @@ export const actions = {
         return currentDateFormated <= examDate;
       };
       function isDateEqual(date) {
+        console.log("currentDate", currentDate)
+        console.log("date", date)
         let currentDateFormated = moment(currentDate, 'YYYY-MM-DD').format('YYYY-MM-DD');
         let examDate = moment(date, 'YYYY-MM-DD').format('YYYY-MM-DD');
         return currentDateFormated == examDate;
       };
+      function dateCompare(date) {
+        let currentDateFormated = moment(currentDate, 'YYYY-MM-DD').format('YYYY-MM-DD');
+        let examDate = moment(date, 'YYYY-MM-DD').format('YYYY-MM-DD');
+        return examDate > currentDateFormated;
+      };
       allExams.map((item) => {
         if (item.isFinish && item.isResult) {
-          item.type="CORRECTED";
+          item.type = "CORRECTED";
           correctedExams.push(item);
         }
         if (item.isFinish && !item.isResult) {
-          item.type="CORRECTING"
+          item.type = "CORRECTING"
           correctedExams.push(item);
         }
         if (!item.isFinish && isDateEqual(item.date)) {
           if (timeCompare(item.startTime, item.endTime) === 'BETWEEN') {
             availableExams.push(item);
-            item.type="NOW"
+            item.type = "NOW";
           }
           if (timeCompare(item.startTime, item.endTime) === 'SMALLER') {
+            console.log("ZZZZ")
             upcomingExams.push(item);
-            item.type="UPCOMING"
+            item.type = "UPCOMING";
           }
           if (timeCompare(item.startTime, item.endTime) === 'BIGGER') {
             correctedExams.push(item);
-            item.type="ABSENT"
+            item.type = "ABSENT";
           }
         }
+        if (!item.isFinish && dateCompare(item.date)) {
+          upcomingExams.push(item);
+          console.log("dateCompare: ", dateCompare(item.date))
+          item.type = "UPCOMING";
+        }
+
         if (!item.isFinish && !isDateSmaller(item.date)) {
-          item.type="ABSENT"
+          item.type = "ABSENT";
           correctedExams.push(item);
         }
 
@@ -253,6 +267,9 @@ export const actions = {
       };
       localStorage.setItem('studentExams', JSON.stringify(dataToCache));
     }
+    // console.log("availableExams", availableExams)
+    // console.log("correctedExams", correctedExams)
+    // console.log("upcomingExams", upcomingExams)
 
     if (payload === 'AVAILABLE_EXAMS') {
       commit('SET_STUDENT_EXAMS', availableExams);

@@ -19,7 +19,8 @@
     "nuxt": "^2.14.6",
     "vue-chartjs": "^3.5.1",
     "vue-jalali-moment": "^1.0.0",
-    "vue-scrollto": "^2.20.0"
+    "vue-scrollto": "^2.20.0",
+    "xlsx": "^0.16.9"
   },
   "devDependencies": {
     "node-sass": "^5.0.0",

@@ -25,7 +25,6 @@ export default async function({ store, redirect, route}) {
   } 
 
   if (path == "/" && (userType == 'admin') && isAdminLoggedIn) {
-    console.log("you are logged in as ADMIN");
     return redirect("/admin");
   } else if ((path.startsWith('/admin') && !isAdminLoggedIn)) {
     return redirect("/operator");

@@ -10,7 +10,7 @@
             {{getStudentName}} {{getStudentFamily}}
           </div>
         </template>
-        <b-dropdown-item href="#">پروفیل</b-dropdown-item>
+        <!-- <b-dropdown-item href="#">پروفیل</b-dropdown-item> -->
         <b-dropdown-item href="#" @click="logout">خروج</b-dropdown-item>
       </b-dropdown>
     </div>

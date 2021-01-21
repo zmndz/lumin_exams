@@ -40,6 +40,7 @@ export default {
       width: 100%;
       height: 100%;
       background-color: rgba(#000000, 0.3);
+      z-index: 1000;
     }
   }
 </style>

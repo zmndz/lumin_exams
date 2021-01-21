@@ -1,7 +1,7 @@
 <template>
   <div class="exam__wrapper">
     <div class="exam">
-      <div class="exam__header">
+      <div ref="js-exam__header" class="exam__header ">
         <div class="row no-gutters w-100" >
           <div class="col-12 col-md-6 col-lg-4">
             <div class="exam__name">
@@ -123,8 +123,9 @@
       </div>
     </div>
 
-    <b-modal ref="modal-confirm" id="modal-confirm" title="BootstrapVue" hide-footer hide-header centered>
+    <b-modal ref="modal-confirm" id="modal-confirm" title="" hide-footer hide-header centered>
       <div style="text-align:center; margin: 20px 0 30px 0;">
+        <Loading v-if="isSubmitLoading" :isOverlay="true" />
         <div v-if="noneAnswered">
           {{noneAnswered}} سوال بدون پاسخ باقی مانده است. آیا از پایان آزمون مطمئن هستید؟
         </div>
@@ -133,9 +134,34 @@
         </div>
       </div>
       <div style="text-align:center;">
-        <b-button variant="success" @click="submitQuestions">بله، مطمئن هستم</b-button>
+        <b-button variant="success" @click="submitQuestions(true)">بله، مطمئن هستم</b-button>
         <b-button v-if="noneAnswered" variant="outline-dangerd" @click="closeConfirm" v-scroll-to="'#js-exam__question-' + noneAnsweredList[0].id">خیر، ادامه می دهم</b-button>
         <b-button v-else variant="outline-dangerd" @click="closeConfirm">خیر، ادامه می دهم</b-button>
+      </div>
+    </b-modal>
+
+    <b-modal ref="modal-alert" id="modal-alert" title="" hide-footer hide-header centered>
+      <div style="text-align:center; margin: 20px 0 30px 0;">
+        <div style="margin-bottom: 32px;">
+          فقط 10 دقیقه تا پایان آزمون باقی مانده است
+        </div>
+        <div>
+          توجه داشه باشید که با پایان زمان آزمون، جواب های ثبت شده به صورت خودکار ارسال خواهند شد.
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <b-button variant="success" @click="closeAlert()">متوجه شدم</b-button>
+      </div>
+    </b-modal>
+
+    <b-modal ref="modal-finish-alert" id="modal-finish-alert" title="" no-close-on-backdrop no-close-on-esc hide-footer hide-header centered>
+      <div style="text-align:center; margin: 20px 0 30px 0;">
+        <div style="margin-bottom: 32px;">
+          زمان آزمون به پایان رسید و پاسخ های شما ارسال شد
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <b-button variant="success" @click="goToStudent()">بازگشت به صفحه اصلی</b-button>
       </div>
     </b-modal>
   </div>
@@ -159,13 +185,17 @@ export default {
       noneAnsweredList: [],
       isThereDescriptive: false,
       questionFile: [],
+      infoBar: null,
+      isSubmitClicked: false,
+      countdown: null,
+      alertCountdown: null,
+      isSubmitLoading: false, 
     }
   },
   computed: {
     ...mapGetters([
       'getCurrentExam',
     ]),
-
   },
   methods: {
     ...mapActions([
@@ -174,6 +204,14 @@ export default {
       'loadCurrentExam',
       'submitExam',
     ]),
+    onShown() {
+      // Focus the cancel button when the overlay is showing
+      this.$refs.cancel.focus()
+    },
+    onHidden() {
+      // Focus the show button when the overlay is removed
+      this.$refs.show.focus()
+    },
     async setFile(event) {
       let file = Object.values(event.target.files);
       this.questionFile = file;
@@ -191,7 +229,14 @@ export default {
     closeConfirm() {
       this.$refs['modal-confirm'].hide();
     },
-    async submitQuestions() {
+    openAlert() {
+      this.$refs['modal-alert'].show();
+    },
+    closeAlert() {
+      this.$refs['modal-alert'].hide();
+    },
+    async submitQuestions(isSubmitClicked) {
+      this.isSubmitLoading = true;
       let submited = this.currentExam.questions.map((item, index) => {
         return {questionID: item.id, type: item.type, answer: item.selected}
       })
@@ -208,11 +253,19 @@ export default {
       let result = await this.submitExam(readyData);
       if(result) {
         // this.updateCurrentExam('');
-        this.$router.push('/student');
-        this.$toast.success(
-          "آزمون با موفقیت به پایان رسید"
-        )
+        this.isSubmitLoading = false;
+        if (isSubmitClicked) {
+          console.log("this.currentExam.testID", this.currentExam.testID)
+          localStorage.removeItem(this.currentExam.testID);
+          this.goToStudent();
+          this.$toast.success(
+            "آزمون با موفقیت ثبت شد"
+          )
+        }
       }
+    },
+    goToStudent() {
+      this.$router.push('/student');
     },
     selectOption(index, selected) {
       this.questions[index].selected = selected;
@@ -241,7 +294,7 @@ export default {
       let milliseconds = parseInt(duration.asMilliseconds());
       const self = this;
       let counter = 0;
-      let countdown = setInterval(function(){
+      this.countdown = setInterval(function(){
         function convertMS( milliseconds ) {
           let hour, minute, seconds;
           seconds = Math.floor(milliseconds / 1000);
@@ -265,10 +318,32 @@ export default {
         self.minutes = minutes;
         self.seconds = seconds;
         if (hours <= 0 && minutes <= 0 && seconds <= 0 ) {
-          clearInterval(countdown);
+          clearInterval(self.countdown);
+          self.submitQuestions();
+          self.$refs['modal-finish-alert'].show();
         }
         counter = counter + 1000;
       }, 1000)
+    },
+    checkAlertTimer() {
+      const self = this;
+      this.alertCountdown = setInterval(function(){
+        if (self.hours == '00' && self.minutes == 11) {
+          self.openAlert();
+          clearInterval(self.alertCountdown);
+        }
+      }, 60000)
+    },
+    checkExamFinish() {
+
+    },
+    fixInfoBar() {
+      let infoBarOffset = this.infoBar.offsetTop;
+      if (window.pageYOffset >= 114) {
+        this.infoBar.classList.add("exam__header--sticky")
+      } else {
+        this.infoBar.classList.remove("exam__header--sticky");
+      }
     },
   },
   async mounted() {
@@ -288,10 +363,18 @@ export default {
     this.noneAnswered = this.currentExam.noneAnsweredCount;
     this.noneAnsweredList = this.currentExam.noneAnsweredList;
     this.initiateTimer();
+    this.checkAlertTimer();
     this.updateCurrentExam({testID: this.currentExam.testID, data: this.currentExam});
+    // this.infoBar = this.$refs['js-exam__header'];
+    // window.addEventListener('scroll', this.fixInfoBar);
   },
   async created() {
     this.loadAllStudentData();
+  },
+  beforeDestroy() {
+    clearInterval(this.countdown);
+    clearInterval(this.alertCountdown);
+    console.log("DESTROYED");
   },
 }
 </script>
@@ -302,13 +385,25 @@ export default {
     &__header {
       display: flex;
       margin-bottom: 24px;
-      padding: 15px;
+      padding: 0px 15px;
       background: #fff;
       border-radius: 10px;
       box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
-      width: 100%;
       justify-content: space-between;
       flex-wrap: wrap;
+
+
+      &--sticky {
+        top: 0px;
+        right: 0px;
+        z-index: 10;
+        position: fixed;
+        width: 100%;
+        border-radius: 0;
+        padding: 6px 30px;
+        font-size: 14px;
+        opacity: 0.9;
+      }
     }
 
     &__title {
@@ -318,7 +413,7 @@ export default {
     &__name {
       display: flex;
       justify-content: space-between;
-      margin: 10px 0;
+      margin: 6px 0;
 
       &-label {
         margin-left: 4px;
@@ -328,7 +423,7 @@ export default {
     &__timer {
       display: flex;
       justify-content: space-between;
-      margin: 10px 0;
+      margin: 6px 0;
 
       &-label {
         margin-left: 4px;
@@ -338,7 +433,7 @@ export default {
     &__questions-left {
       display: flex;
       justify-content: space-between;
-      margin: 10px 0;
+      margin: 6px 0;
       cursor: pointer;
 
       &-label {
@@ -357,7 +452,7 @@ export default {
     &__marked {
       display: flex;
       justify-content: space-between;
-      margin: 10px 0;
+      margin: 6px 0;
 
       &-label {
         margin-left: 4px;
@@ -374,6 +469,10 @@ export default {
       box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
       width: 100%;
       text-align: right;
+
+      &--sticky {
+        margin-top: 100px;
+      }
     }
 
     &__question {
@@ -489,6 +588,15 @@ export default {
   // Medium devices (tablets, 768px and up)
   @media (min-width: 767.98px) {
     .exam {
+
+      &__header {
+
+        &--sticky {
+          padding: 15px 54px;
+          font-size: 16px;
+        }
+      }
+
       &__name {
         justify-content: flex-start;
       }
@@ -504,12 +612,22 @@ export default {
       &__marked {
         justify-content: flex-start;
       }
+
+
     }
   }
 
   // large devices (laptops, 768px and up)
   @media (min-width: 991.98px) {
     .exam {
+
+      &__header {
+        padding: 15px;
+
+        &--sticky {
+          padding: 15px 54px;
+        }
+      }
 
     }
   }

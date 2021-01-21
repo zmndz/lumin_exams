@@ -211,8 +211,6 @@ export const actions = {
         return currentDateFormated <= examDate;
       };
       function isDateEqual(date) {
-        console.log("currentDate", currentDate)
-        console.log("date", date)
         let currentDateFormated = moment(currentDate, 'YYYY-MM-DD').format('YYYY-MM-DD');
         let examDate = moment(date, 'YYYY-MM-DD').format('YYYY-MM-DD');
         return currentDateFormated == examDate;
@@ -237,7 +235,6 @@ export const actions = {
             item.type = "NOW";
           }
           if (timeCompare(item.startTime, item.endTime) === 'SMALLER') {
-            console.log("ZZZZ")
             upcomingExams.push(item);
             item.type = "UPCOMING";
           }
@@ -248,7 +245,6 @@ export const actions = {
         }
         if (!item.isFinish && dateCompare(item.date)) {
           upcomingExams.push(item);
-          console.log("dateCompare: ", dateCompare(item.date))
           item.type = "UPCOMING";
         }
 
@@ -334,8 +330,11 @@ export const actions = {
     let test_id = payload;
     let storage = JSON.parse(localStorage.getItem(test_id));
     if (storage && storage.testID == test_id) {
-      await dispatch('setCurrentExam', {testID: test_id, data: storage})
-      return storage
+      let currentTime = moment().format('HH:mm:ss');
+      if (currentTime <= storage.endTime) {
+        await dispatch('setCurrentExam', {testID: test_id, data: storage})
+        return storage
+      }
     }
 
     let requestBody = {

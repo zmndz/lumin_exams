@@ -1,11 +1,11 @@
 <template>
   <div class="exams__wrapper">
     <div class="action-bar">
-      <!-- <div class="action-bar__new-exam-wrapper">
-        <div class="action-bar__new-exam" v-b-modal.modal-new-exam >
+      <div class="action-bar__new-exam-wrapper">
+        <!-- <div class="action-bar__new-exam" v-b-modal.modal-new-exam >
           + آزمون جدید
-        </div>
-      </div> -->
+        </div> -->
+      </div>
       <div class="action-bar__search-wrapper">
         <input v-model="examSearch" @keyup="search" class="action-bar__search" type="text" placeholder="جستجو...">
       </div>

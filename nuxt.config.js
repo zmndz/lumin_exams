@@ -3,7 +3,7 @@ import userAuth from "./middleware/userAuth";
 export default {
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head: {
-    title: 'سیستم امتحانات متمرکز لومین',
+    title: 'سیستم آزمون آنلاین لومین',
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -16,8 +16,7 @@ export default {
 
   // Global CSS (https://go.nuxtjs.dev/config-css)
   css: [
-    '@/assets/scss/style.scss'
-
+    '@/assets/scss/style.scss',
   ],
 
   // Plugins to run before rendering page (https://go.nuxtjs.dev/config-plugins)
@@ -45,6 +44,50 @@ export default {
     ['vue-scrollto/nuxt', { duration: 300 }],
 
   ],
+  pwa: {
+    manifest: {
+      name: 'لومین',
+      short_name: 'لومین',
+      lang: 'fa',
+      orientation: 'portrait',
+      description: 'سیستم آزمون آنلاین لومین',
+      theme_color: '#fdbc11',
+      background_color: '#fff',
+      icons: [
+        {
+          src: '/icon-64.png',
+          sizes: '64x64',
+          type: 'image/png',
+        },{
+          src: '/icon-120.png',
+          sizes: '120x120',
+          type: 'image/png',
+        },{
+          src: '/icon-144.png',
+          sizes: '144x144',
+          type: 'image/png',
+        },{
+          src: '/icon-152.png',
+          sizes: '152x152',
+          type: 'image/png',
+        },{
+          src: '/icon-192.png',
+          sizes: '192x192',
+          type: 'image/png',
+        },{
+          src: '/icon-384.png',
+          sizes: '384x384',
+          type: 'image/png',
+        },{
+          src: '/icon-512.png',
+          sizes: '512x512',
+          type: 'image/png',
+        },
+      ],
+    },
+
+  
+  },
 
   loading: {
     name: 'chasing-dots',

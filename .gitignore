@@ -91,3 +91,6 @@ sw.*
 
 # Veture extension's config file
 jsconfig.json
+
+# Ready to upload on server
+_SERVER

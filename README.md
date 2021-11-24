@@ -1,5 +1,6 @@
 # lumin_exams
 
+Lomin is an online test and quiz maker that focuses on meeting the needs of schools and universities by being secure and easy to use. Lomin has a user-friendly design and can handle more than a hundred thousand concurrent users taking exams.
 ## Build Setup
 
 ```bash
